@@ -47,8 +47,6 @@
 #else
 #include <boost/assert.hpp>
 #endif
-#include <boost/noncopyable.hpp>
-#include <boost/thread/mutex.hpp>
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
@@ -57,70 +55,55 @@
 #include <boost/preprocessor/arithmetic/inc.hpp>
 #include <boost/preprocessor/arithmetic/div.hpp>
 #include <boost/preprocessor/arithmetic/mod.hpp>
-#include <pow2.hpp>
+#include <boost/mpl/assert.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <detail/pow2.hpp>
+
+#include <singularity_policies.hpp>
 
 // The user can choose a different arbitrary upper limit to the
-// number of constructor arguments.  The Boost Preprocessor library
-// is used to generate the appropriate code.
-#ifndef BOOST_SINGULARITY_LIMIT_ARGS
-#define BOOST_SINGULARITY_LIMIT_ARGS 6
+// maximum number of constructor arguments.
+#ifndef BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE
+#define BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE 5
 #endif
 
 namespace boost {
 
-// The threading model for Singularity is policy based, and
-// a single threaded, and multi threaded policy are provided,
-// when thread safety is required.
-template <class T> class single_threaded
+#ifndef BOOST_NO_EXCEPTIONS
+struct singularity_already_created : virtual std::exception
 {
-public:
-    typedef T * ptr_type;
+    virtual char const *what() const throw()
+    {
+        return "boost::singularity_already_created";
+    }
 };
 
-// Users of singularity are encouraged to develop their own
-// thread-safe policies which meet their unique requirements
-// and constraints.  The policy provided here is implemented
-// using boost::mutex, and therefore requires exceptions on
-// certain platforms.
-//
-// In addition, if the user desires to use an auto_ptr<T>,
-// shared_ptr<T>, unique_ptr<T>, etc... instead of T *,
-// a custom policy can be provided to implement that
-// functionality.
-#ifndef BOOST_NO_EXCEPTIONS
-template <class T> class multi_threaded
+struct singularity_already_destroyed : virtual std::exception
 {
-public:
-    inline multi_threaded()
+    virtual char const *what() const throw()
     {
-        lockable.lock();
+        return "boost::singularity_already_destroyed";
     }
-    inline ~multi_threaded()
-    {
-        lockable.unlock();
-    }
-    typedef T * volatile ptr_type;
-private:
-    static boost::mutex lockable;
 };
 
-template <class T> boost::mutex multi_threaded<T>::lockable;
+struct singularity_not_created : virtual std::exception
+{
+    virtual char const *what() const throw()
+    {
+        return "boost::singularity_not_created";
+    }
+};
+
+struct singularity_destroy_on_incorrect_threading : virtual std::exception
+{
+    virtual char const *what() const throw()
+    {
+        return "boost::singularity_destroy_on_incorrect_threading";
+    }
+};
 #endif
 
-// This template argument policy disables instantiation of
-// the singularity::get() member function.
-struct local_access {};
-
-// This template argument policy enables instantiation of
-// the singularity::get() member function.
-struct global_access {};
-
-#ifndef BOOST_NO_EXCEPTIONS
-struct singularity_already_created : virtual std::exception {};
-struct singularity_already_destroyed : virtual std::exception {};
-struct singularity_not_created : virtual std::exception {};
-struct singularity_destroy_on_incorrect_threading : virtual std::exception {};
-#endif
+namespace detail {
 
 // This boolean only depends on type T, so regardless of the threading
 // model, or access policy, only one singularity of type T can be created.
@@ -144,37 +127,14 @@ template <class T, template <class T> class M>
 typename singularity_instance<T, M>::instance_ptr_type
 singularity_instance<T, M>::instance_ptr = NULL;
 
-// This class provides the implementation for the singularity::get() member
-// function.  A partial specialization is only provided if the access
-// policy "global_access" is provided.  This produces a compile time error
-// if the user attempts to call get() when using the "local_access" default
-// policy.
-template <class T, template <class T> class M, class G> class singularity_global_access;
-
-template <class T, template <class T> class M>
-class singularity_global_access<T, M, global_access>
-{
-public:
-    static inline T& get()
-    {
-        #ifndef BOOST_NO_EXCEPTIONS
-        if (singularity_instance<T, M>::instance_ptr == NULL)
-        {
-            throw singularity_not_created();
-        }
-        #else
-        BOOST_ASSERT(singularity_instance<T, M>::instance_ptr != NULL);
-        #endif
-        return *singularity_instance<T, M>::instance_ptr;
-    }
-};
+} // detail namespace
 
 // And now, presenting the singularity class itself.
 template
 <
     class T,
     template <class T> class M = single_threaded,
-    class G = local_access
+    class G = no_global_access
 >
 class singularity
 {
@@ -197,55 +157,66 @@ public:
         \
         detect_already_created(); \
         \
-        singularity_instance<T, M>::instance_ptr = new T(BOOST_PP_ENUM_PARAMS(na, arg)); \
-        singularity_state<T>::created = true; \
-        return *singularity_instance<T, M>::instance_ptr; \
+        detail::singularity_instance<T, M>::instance_ptr = new T(BOOST_PP_ENUM_PARAMS(na, arg)); \
+        detail::singularity_state<T>::created = true; \
+        return *detail::singularity_instance<T, M>::instance_ptr; \
     }
 
 #define SINGULARITY_CREATE_OVERLOADS(z, na, text) BOOST_PP_REPEAT(BOOST_PP_EXPAND(BOOST_PP_POW2(na)), SINGULARITY_CREATE_BODY, na)
 
-BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_LIMIT_ARGS), SINGULARITY_CREATE_OVERLOADS, _)
+BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE), SINGULARITY_CREATE_OVERLOADS, _)
 
     static inline void destroy() {
         M<T> guard;
         (void)guard;
 
         #ifndef BOOST_NO_EXCEPTIONS
-        if (singularity_state<T>::created != true)
+        if (detail::singularity_state<T>::created != true)
         {
             throw singularity_already_destroyed();
         }
-        if (singularity_instance<T, M>::instance_ptr == NULL)
+        if (detail::singularity_instance<T, M>::instance_ptr == NULL)
         {
             throw singularity_destroy_on_incorrect_threading();
         }
         #else
-        BOOST_ASSERT(singularity_state<T>::created == true);
-        BOOST_ASSERT((singularity_instance<T, M>::instance_ptr != NULL));
+        BOOST_ASSERT(detail::singularity_state<T>::created == true);
+        BOOST_ASSERT((detail::singularity_instance<T, M>::instance_ptr != NULL));
         #endif
 
-        delete singularity_instance<T, M>::instance_ptr;
-        singularity_instance<T, M>::instance_ptr = NULL;
-        singularity_state<T>::created = false;
+        delete detail::singularity_instance<T, M>::instance_ptr;
+        detail::singularity_instance<T, M>::instance_ptr = NULL;
+        detail::singularity_state<T>::created = false;
     }
 
     static inline T& get()
     {
+        BOOST_MPL_ASSERT(( is_same<G, global_access> ));
+
         M<T> guard;
         (void)guard;
 
-        return singularity_global_access<T, M, G>::get();
+        #ifndef BOOST_NO_EXCEPTIONS
+        if (detail::singularity_instance<T, M>::instance_ptr == NULL)
+        {
+            throw singularity_not_created();
+        }
+        #else
+        BOOST_ASSERT(detail::singularity_instance<T, M>::instance_ptr != NULL);
+        #endif
+
+        return *detail::singularity_instance<T, M>::instance_ptr;
     }
 private:
     static inline void detect_already_created()
     {
         #ifndef BOOST_NO_EXCEPTIONS
-        if (singularity_state<T>::created != false)
+        if (detail::singularity_state<T>::created != false)
         {
             throw singularity_already_created();
         }
         #else
-        BOOST_ASSERT(singularity_state<T>::created == false);
+        BOOST_ASSERT(detail::singularity_state<T>::created == false);
         #endif
     }
 };

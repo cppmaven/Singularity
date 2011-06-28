@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-//#define BOOST_TEST_MAIN defined
+#define BOOST_TEST_MAIN defined
 #include <boost/test/unit_test.hpp>
 #include <boost/noncopyable.hpp>
 #include <singularity.hpp>
@@ -42,7 +42,6 @@ private:
 
     FRIEND_CLASS_SINGULARITY;
 };
-
 
 BOOST_AUTO_TEST_CASE(passOneArgumentByValue) {
     int value = 3;

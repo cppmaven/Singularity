@@ -107,23 +107,12 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnDoubleCallsWithDifferentArguments) {
     );
 }
 
-BOOST_AUTO_TEST_CASE(shouldThrowOnDestroyWithWrongThreading) {
-    Horizon & horizon = Horizon::create();
-    (void)horizon;
-
-    BOOST_CHECK_THROW( // Call destroy() with wrong threading
-        (singularity<Horizon, multi_threaded>::destroy()),
-        boost::singularity_destroy_on_incorrect_threading
-    );
-    Horizon::destroy();
-}
-
 BOOST_AUTO_TEST_CASE(shouldCreateDestroyCreateDestroy) {
     Horizon & horizon = Horizon::create();
     (void)horizon;
     Horizon::destroy();
-    Horizon & new_horizon = Horizon::create();
-    (void)new_horizon;
+    Horizon & different_horizon = Horizon::create();
+    (void)different_horizon;
     Horizon::destroy();
 }
 

@@ -93,39 +93,18 @@ struct singularity_not_created : virtual std::exception
         return "boost::singularity_not_created";
     }
 };
-
-struct singularity_destroy_on_incorrect_threading : virtual std::exception
-{
-    virtual char const *what() const throw()
-    {
-        return "boost::singularity_destroy_on_incorrect_threading";
-    }
-};
 #endif
 
 namespace detail {
 
 // This boolean only depends on type T, so regardless of the threading
 // model, or access policy, only one singularity of type T can be created.
-template <class T> struct singularity_state
+template <class T> struct singularity_instance
 {
-    static bool created;
+    static ::boost::scoped_ptr<T> ptr;
 };
 
-template <class T> bool singularity_state<T>::created = false;
-
-// The instance pointer must depend on both type T and the threading model M,
-// in order to control whether or not the pointer is volatile.  It does not
-// need to depend on the access policy G.
-template <class T, template <class T> class M> struct singularity_instance
-{
-    typedef typename M<T>::ptr_type instance_ptr_type;
-    static instance_ptr_type instance_ptr;
-};
-
-template <class T, template <class T> class M>
-typename singularity_instance<T, M>::instance_ptr_type
-singularity_instance<T, M>::instance_ptr = NULL;
+template <class T> ::boost::scoped_ptr<T> singularity_instance<T>::ptr(0);
 
 } // detail namespace
 
@@ -157,9 +136,8 @@ public:
         \
         detect_already_created(); \
         \
-        detail::singularity_instance<T, M>::instance_ptr = new T(BOOST_PP_ENUM_PARAMS(na, arg)); \
-        detail::singularity_state<T>::created = true; \
-        return *detail::singularity_instance<T, M>::instance_ptr; \
+        detail::singularity_instance<T>::ptr.reset(new T(BOOST_PP_ENUM_PARAMS(na, arg))); \
+        return *detail::singularity_instance<T>::ptr; \
     }
 
 #define SINGULARITY_CREATE_OVERLOADS(z, na, text) BOOST_PP_REPEAT(BOOST_PP_EXPAND(BOOST_PP_POW2(na)), SINGULARITY_CREATE_BODY, na)
@@ -171,22 +149,16 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE), SINGULARIT
         (void)guard;
 
         #ifndef BOOST_NO_EXCEPTIONS
-        if (detail::singularity_state<T>::created != true)
+        if (detail::singularity_instance<T>::ptr.get() == 0)
         {
             throw singularity_already_destroyed();
         }
-        if (detail::singularity_instance<T, M>::instance_ptr == NULL)
-        {
-            throw singularity_destroy_on_incorrect_threading();
-        }
         #else
-        BOOST_ASSERT(detail::singularity_state<T>::created == true);
-        BOOST_ASSERT((detail::singularity_instance<T, M>::instance_ptr != NULL));
+        BOOST_ASSERT((detail::singularity_instance<T>::ptr.get() != 0));
         #endif
 
-        delete detail::singularity_instance<T, M>::instance_ptr;
-        detail::singularity_instance<T, M>::instance_ptr = NULL;
-        detail::singularity_state<T>::created = false;
+        delete detail::singularity_instance<T>::ptr.get();
+        detail::singularity_instance<T>::ptr.reset();
     }
 
     static inline T& get()
@@ -197,26 +169,26 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE), SINGULARIT
         (void)guard;
 
         #ifndef BOOST_NO_EXCEPTIONS
-        if (detail::singularity_instance<T, M>::instance_ptr == NULL)
+        if (detail::singularity_instance<T>::ptr.get() == 0)
         {
             throw singularity_not_created();
         }
         #else
-        BOOST_ASSERT(detail::singularity_instance<T, M>::instance_ptr != NULL);
+        BOOST_ASSERT(detail::singularity_instance<T>::ptr.get() != 0);
         #endif
 
-        return *detail::singularity_instance<T, M>::instance_ptr;
+        return *detail::singularity_instance<T>::ptr;
     }
 private:
     static inline void detect_already_created()
     {
         #ifndef BOOST_NO_EXCEPTIONS
-        if (detail::singularity_state<T>::created != false)
+        if (detail::singularity_instance<T>::ptr.get() != 0)
         {
             throw singularity_already_created();
         }
         #else
-        BOOST_ASSERT(detail::singularity_state<T>::created == false);
+        BOOST_ASSERT(detail::singularity_instance<T>::ptr.get() == 0);
         #endif
     }
 };

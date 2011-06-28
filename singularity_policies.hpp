@@ -15,26 +15,22 @@
 #else
 #include <boost/assert.hpp>
 #endif
+#include <boost/scoped_ptr.hpp>
 
 namespace boost {
 
-// The threading model for Singularity is policy based, and
-// a single threaded, and multi threaded policy are provided,
-// when thread safety is required.
+// The threading model for Singularity is policy based.  The
+// single_threaded policy provides maximum performance, and
+// the multi-threaded policy provides thread safety.
 
-// The single_threaded policy uses a non-volatile pointer,
-// and a POD struct with no mutex to maximize compiler
-// optimizations.
-template <class T> class single_threaded
-{
-public:
-    typedef T * ptr_type;
-};
+// The single_threaded policy is a POD struct with
+// no mutex to maximize compiler optimizations.
+template <class T> class single_threaded {};
 
 // Users of singularity are encouraged to develop their own
 // thread-safe policies which meet their unique requirements
 // and constraints.  The policy provided here is implemented
-// using boost::mutex, and therefore requires exceptions on
+// using ::boost::mutex, and therefore requires exceptions on
 // certain platforms.
 #ifndef BOOST_NO_EXCEPTIONS
 template <class T> class multi_threaded
@@ -48,12 +44,13 @@ public:
     {
         lockable.unlock();
     }
-    typedef T * volatile ptr_type; // CV qualifiers are best read right to left.
 private:
+    // The mutex acquisition and release must provide
+    // fencing in order to be thread-safe.
     static ::boost::mutex lockable;
 };
 
-template <class T> boost::mutex multi_threaded<T>::lockable;
+template <class T> ::boost::mutex multi_threaded<T>::lockable;
 #endif
 
 // This template argument policy disables instantiation of

@@ -1,0 +1,40 @@
+
+//               Copyright Ben Robinson 2011.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          http://www.boost.org/LICENSE_1_0.txt)
+
+//----------------------------------------------------------------------------
+//! \file
+//! \brief Singularity design pattern enforces a single instance of a class.
+//!
+//! Unlike Singleton, singularity does not force global access, nor does it
+//! require that the class have a default constructor.  The lifetime of the
+//! object is simply defined between create() and destroy().
+//! An object created with singularity must be passed into objects which depend
+//! on them, just like any other object.  Unless using the "global_access"
+//! policy, in which case global access to the object is provided.
+//----------------------------------------------------------------------------
+//  Event event;
+//  int value = 3;
+//
+//  Usage as a Factory:
+//
+//  typedef singularity<Horizon, single_threaded, local_access> HorizonSingularityType;
+//  Horizon & horizonA = HorizonSingularityType::create();
+//                       HorizonSingularityType::destroy();
+//
+//  Horizon & horizonB = HorizonSingularityType::create(value, &event, event);
+//                       HorizonSingularityType::destroy();
+//
+//  Usage as a Base Class:
+//
+//  class Horizon : public singularity<Horizon, multi_threaded, global_access>
+//  Horizon & horizonC = Horizon::create();
+//                       Horizon::destroy(0);
+//
+//  Horizon & horizonD = Horizon::create(value, &event, event);
+//                       Horizon::destroy();
+//----------------------------------------------------------------------------
+
+// Include the header <singularity.hpp> to use.

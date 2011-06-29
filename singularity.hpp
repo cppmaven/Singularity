@@ -16,24 +16,19 @@
 //! policy, in which case global access to the object is provided.
 //----------------------------------------------------------------------------
 //  Event event;
-//  int value = 3;
+//  int value = 1;
 //
 //  Usage as a Factory:
 //
 //  typedef singularity<Horizon, single_threaded, local_access> HorizonSingularityType;
-//  Horizon & horizonA = HorizonSingularityType::create();
-//                       HorizonSingularityType::destroy();
-//
-//  Horizon & horizonB = HorizonSingularityType::create(value, &event, event);
+//  Horizon & horizonF = HorizonSingularityType::create(value, &event, event);
 //                       HorizonSingularityType::destroy();
 //
 //  Usage as a Base Class:
 //
 //  class Horizon : public singularity<Horizon, multi_threaded, global_access>
-//  Horizon & horizonC = Horizon::create();
-//                       Horizon::destroy(0);
-//
-//  Horizon & horizonD = Horizon::create(value, &event, event);
+//  Horizon & horizonB = Horizon::create(value, &event, event);
+//  Horizon & horizonC = Horizon::get();
 //                       Horizon::destroy();
 //----------------------------------------------------------------------------
 
@@ -51,13 +46,13 @@
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
-#include <boost/preprocessor/facilities/expand.hpp>
 #include <boost/preprocessor/arithmetic/inc.hpp>
 #include <boost/preprocessor/arithmetic/div.hpp>
 #include <boost/preprocessor/arithmetic/mod.hpp>
 #include <boost/mpl/assert.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <detail/pow2.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <singularity_policies.hpp>
 
@@ -97,7 +92,7 @@ struct singularity_not_created : virtual std::exception
 
 namespace detail {
 
-// This boolean only depends on type T, so regardless of the threading
+// This pointer only depends on type T, so regardless of the threading
 // model, or access policy, only one singularity of type T can be created.
 template <class T> struct singularity_instance
 {
@@ -140,11 +135,12 @@ public:
         return *detail::singularity_instance<T>::ptr; \
     }
 
-#define SINGULARITY_CREATE_OVERLOADS(z, na, text) BOOST_PP_REPEAT(BOOST_PP_EXPAND(BOOST_PP_POW2(na)), SINGULARITY_CREATE_BODY, na)
+#define SINGULARITY_CREATE_OVERLOADS(z, na, text) BOOST_PP_REPEAT(BOOST_PP_POW2(na), SINGULARITY_CREATE_BODY, na)
 
 BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE), SINGULARITY_CREATE_OVERLOADS, _)
 
-    static inline void destroy() {
+    static inline void destroy()
+    {
         M<T> guard;
         (void)guard;
 

@@ -21,18 +21,19 @@
 //
 //  Horizon & horizonA = singularity_factory<Horizon>::create();
 //                       singularity_factory<Horizon>::destroy();
-//  Horizon & horizonB = singularity_factory<Horizon, int>::create(3);
-//                       singularity_factory<Horizon, int>::destroy();
-//  Horizon & horizonC = singularity_factory<Horizon, Event*>::create(&event);
-//                       singularity_factory<Horizon, Event*>::destroy();
-//  Horizon & horizonD = singularity_factory<Horizon, Event&>::create(event);
-//                       singularity_factory<Horizon, Event&>::destroy();
-//  Horizon & horizonE = singularity_factory<Horizon, int, Event*, Event&>::create(3, &event, event);
-//                       singularity_factory<Horizon, int, Event*, Event&>::destroy();
+//  Horizon & horizonB = singularity_factory<Horizon, single_threaded, no_global_access, int>::create(3);
+//                       singularity_factory<Horizon>::destroy();
+//  Horizon & horizonC = singularity_factory<Horizon, single_threaded, no_global_access, Event*>::create(&event);
+//                       singularity_factory<Horizon>::destroy();
+//  Horizon & horizonD = singularity_factory<Horizon, single_threaded, global_access, Event&>::create(event);
+//                       singularity_factory<Horizon>::destroy();
+//  Horizon & horizonE = singularity_factory<Horizon, multi_threaded, global_access, int, Event*, Event&>::create(3, &event, event);
+//  Horizon & horizonE2 = singularity_factory<Horizon>::get();
+//                       singularity_factory<Horizon>::destroy();
 //----------------------------------------------------------------------------
 
-#ifndef SINGULARITY_HPP_
-#define SINGULARITY_HPP_
+#ifndef SINGULARITY_FACTORY_HPP_
+#define SINGULARITY_FACTORY_HPP_
 
 // Certain developers cannot use exceptions, therefore this class
 // can be defined to use assertions instead.
@@ -205,4 +206,4 @@ private:
 
 } // boost namespace
 
-#endif // SINGULARITY_HPP_
+#endif // SINGULARITY_FACTORY_HPP_

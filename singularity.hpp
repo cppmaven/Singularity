@@ -16,17 +16,16 @@
 //! policy, in which case global access to the object is provided.
 //----------------------------------------------------------------------------
 //  Event event;
-//  int value = 1;
 //
 //  Usage as a Factory:
 //
-//  typedef singularity<Horizon, single_threaded, local_access> HorizonSingularityType;
-//  Horizon & horizonF = HorizonSingularityType::create(value, &event, event);
+//  typedef singularity<Horizon, single_threaded> HorizonSingularityType;
+//  Horizon & horizonF = HorizonSingularityType::create(1, &event, event);
 //                       HorizonSingularityType::destroy();
 //
 //  Usage as a Base Class:
 //
-//  class Horizon : public singularity<Horizon, multi_threaded, global_access>
+//  class Horizon : public singularity<Horizon, multi_threaded>
 //  Horizon & horizonB = Horizon::create(value, &event, event);
 //  Horizon & horizonC = Horizon::get();
 //                       Horizon::destroy();
@@ -45,12 +44,12 @@
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
+#include <boost/preprocessor/repetition/repeat_from_to.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/arithmetic/inc.hpp>
 #include <boost/preprocessor/arithmetic/div.hpp>
 #include <boost/preprocessor/arithmetic/mod.hpp>
 #include <boost/mpl/assert.hpp>
-#include <boost/type_traits/is_same.hpp>
 #include <detail/pow2.hpp>
 #include <boost/scoped_ptr.hpp>
 
@@ -58,8 +57,12 @@
 
 // The user can choose a different arbitrary upper limit to the
 // maximum number of constructor arguments.
-#ifndef BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE
-#define BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE 5
+#ifndef BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE
+#define BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE 3
+#endif
+
+#ifndef BOOST_SINGULARITY_NONCONST_REFERENCE_ARG_SIZE
+#define BOOST_SINGULARITY_NONCONST_REFERENCE_ARG_SIZE 10
 #endif
 
 namespace boost {
@@ -88,6 +91,14 @@ struct singularity_not_created : virtual std::exception
         return "boost::singularity_not_created";
     }
 };
+
+struct singularity_no_global_access : virtual std::exception
+{
+    virtual char const *what() const throw()
+    {
+        return "boost::singularity_no_global_access";
+    }
+};
 #endif
 
 namespace detail {
@@ -96,9 +107,11 @@ namespace detail {
 // model, or access policy, only one singularity of type T can be created.
 template <class T> struct singularity_instance
 {
+    static bool global_access;
     static ::boost::scoped_ptr<T> ptr;
 };
 
+template <class T> bool singularity_instance<T>::global_access = false;
 template <class T> ::boost::scoped_ptr<T> singularity_instance<T>::ptr(0);
 
 } // detail namespace
@@ -107,20 +120,18 @@ template <class T> ::boost::scoped_ptr<T> singularity_instance<T>::ptr(0);
 template
 <
     class T,
-    template <class T> class M = single_threaded,
-    class G = no_global_access
+    template <class T> class M = single_threaded
 >
 class singularity
 {
 public:
-// Generate the 2^(n+1)-1 create(...) function overloads
-// where n is the maximum number of arguments.  With variadic
-// templates, it should be possible to create only n+1 overloads.
+// Generate the 2^(n+1)-1 which is O(2^n) create(...) function overloads
+// where n is the maximum number of constructor arguments.
 //
 // na = Number of arguments
-// ai = Argument Index
+// n  = Argument Index
 // fi = Function Index
-#define SINGULARITY_CREATE_ARGUMENTS(z, ai, fi) BOOST_PP_COMMA_IF(ai) A##ai BOOST_PP_IF(BOOST_PP_MOD(BOOST_PP_IF(ai,BOOST_PP_DIV(fi,BOOST_PP_POW2(ai)),fi),2),*,&) arg##ai
+#define SINGULARITY_CREATE_ARGUMENTS(z, n, fi) BOOST_PP_COMMA_IF(n) A##n BOOST_PP_IF(BOOST_PP_MOD(BOOST_PP_IF(n,BOOST_PP_DIV(fi,BOOST_PP_POW2(n)),fi),2),const &,&) arg##n
 
 #define SINGULARITY_CREATE_BODY(z, fi, na) \
     BOOST_PP_IF(na,template <,) BOOST_PP_ENUM_PARAMS(na, class A) BOOST_PP_IF(na,>,) \
@@ -129,7 +140,7 @@ public:
         M<T> guard; \
         (void)guard; \
         \
-        detect_already_created(); \
+        verify_not_created(); \
         \
         detail::singularity_instance<T>::ptr.reset(new T(BOOST_PP_ENUM_PARAMS(na, arg))); \
         return *detail::singularity_instance<T>::ptr; \
@@ -137,7 +148,32 @@ public:
 
 #define SINGULARITY_CREATE_OVERLOADS(z, na, text) BOOST_PP_REPEAT(BOOST_PP_POW2(na), SINGULARITY_CREATE_BODY, na)
 
-BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE), SINGULARITY_CREATE_OVERLOADS, _)
+BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), SINGULARITY_CREATE_OVERLOADS, _)
+
+#undef SINGULARITY_CREATE_OVERLOADS
+#undef SINGULARITY_CREATE_BODY
+#undef SINGULARITY_CREATE_ARGUMENTS
+
+// Generates: Family of create(...) functions
+#define SINGULARITY_CREATE_ARGUMENTS(z, n, text) BOOST_PP_COMMA_IF(n) A##n & arg##n
+
+#define SINGULARITY_CREATE_BODY(z, n, text) \
+    BOOST_PP_IF(n,template <,) BOOST_PP_ENUM_PARAMS(n, class A) BOOST_PP_IF(n,>,) \
+    static inline T& create( BOOST_PP_REPEAT(n, SINGULARITY_CREATE_ARGUMENTS, _) ) \
+    { \
+        M<T> guard; \
+        (void)guard; \
+        \
+        verify_not_created(); \
+        \
+        detail::singularity_instance<T>::ptr.reset(new T(BOOST_PP_ENUM_PARAMS(n, arg))); \
+        return *detail::singularity_instance<T>::ptr; \
+    }
+
+BOOST_PP_REPEAT_FROM_TO(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), BOOST_SINGULARITY_NONCONST_REFERENCE_ARG_SIZE, SINGULARITY_CREATE_BODY, _)
+
+#undef SINGULARITY_CREATE_ARGUMENTS
+#undef SINGULARITY_CREATE_BODY
 
     static inline void destroy()
     {
@@ -157,12 +193,28 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE), SINGULARIT
         detail::singularity_instance<T>::ptr.reset();
     }
 
-    static inline T& get()
+    static inline void enable_global_access(bool is_global)
     {
-        BOOST_MPL_ASSERT(( is_same<G, global_access> ));
-
         M<T> guard;
         (void)guard;
+
+        verify_not_created();
+
+        detail::singularity_instance<T>::global_access = is_global;
+    }
+
+    static inline T& get()
+    {
+        M<T> guard;
+        (void)guard;
+
+        #ifndef BOOST_NO_EXCEPTIONS
+        if (detail::singularity_instance<T>::global_access == false) {
+            throw singularity_no_global_access();
+        }
+        #else
+        BOOST_ASSERT(detail::singularity_instance<T>::global_access != false);
+        #endif
 
         #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::ptr.get() == 0)
@@ -176,7 +228,7 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_CONSTRUCTOR_ARG_SIZE), SINGULARIT
         return *detail::singularity_instance<T>::ptr;
     }
 private:
-    static inline void detect_already_created()
+    static inline void verify_not_created()
     {
         #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::ptr.get() != 0)
@@ -190,9 +242,9 @@ private:
 };
 
 // Convenience macro which generates the required friend statement
-// for use inside classes which are created by singularity.
+// for use inside classes which are created by singularity_implicit.
 #define FRIEND_CLASS_SINGULARITY \
-    template <class T, template <class T> class M, class G> friend class singularity
+    template <class T, template <class T> class M> friend class singularity
 
 } // boost namespace
 

@@ -16,17 +16,16 @@
 //! policy, in which case global access to the object is provided.
 //----------------------------------------------------------------------------
 //  Event event;
-//  int value = 1;
 //
 //  Usage as a Factory:
 //
-//  typedef singularity<Horizon, single_threaded, local_access> HorizonSingularityType;
-//  Horizon & horizonF = HorizonSingularityType::create(value, &event, event);
+//  typedef singularity<Horizon, single_threaded> HorizonSingularityType;
+//  Horizon & horizonF = HorizonSingularityType::create(1, &event, event);
 //                       HorizonSingularityType::destroy();
 //
 //  Usage as a Base Class:
 //
-//  class Horizon : public singularity<Horizon, multi_threaded, global_access>
+//  class Horizon : public singularity<Horizon, multi_threaded>
 //  Horizon & horizonB = Horizon::create(value, &event, event);
 //  Horizon & horizonC = Horizon::get();
 //                       Horizon::destroy();

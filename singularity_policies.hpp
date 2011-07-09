@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef SINGULARITY_POLICIES_HPP
-#define SINGULARITY_POLICIES_HPP
+#ifndef SINGULARITY_CPP03_POLICIES_HPP
+#define SINGULARITY_CPP03_POLICIES_HPP
 
 // Certain developers cannot use exceptions, therefore this class
 // can be defined to use assertions instead.
@@ -64,4 +64,4 @@ struct global_access {};
 
 } // boost namespace
 
-#endif // SINGULARITY_POLICIES_HPP
+#endif // SINGULARITY_CPP03_POLICIES_HPP

@@ -19,9 +19,8 @@
 //
 //  Usage as a Factory:
 //
-//  typedef singularity<Horizon, single_threaded> HorizonSingularityType;
-//  Horizon & horizonF = HorizonSingularityType::create(1, &event, event);
-//                       HorizonSingularityType::destroy();
+//  Horizon & horizonF = singularity<Horizon, single_threaded>::create(1, &event, event);
+//                       singularity<Horizon, single_threaded>::destroy();
 //
 //  Usage as a Base Class:
 //

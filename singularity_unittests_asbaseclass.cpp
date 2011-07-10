@@ -155,16 +155,13 @@ BOOST_AUTO_TEST_CASE(callCreateAgainAfterPreviousIsDestroyed) {
 }
 
 BOOST_AUTO_TEST_CASE(demonstrateProperUseOfGet) {
-    Horizon::enable_global_access(true);
-
-    Horizon & horizon = Horizon::create();
+    Horizon & horizon = Horizon::create_enable_get();
     (void)horizon;
 
     Horizon & SameHorizon = Horizon::get();
     (void)SameHorizon;
 
     Horizon::destroy();
-    Horizon::enable_global_access(false);
 }
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetIfNotEnabled) {
@@ -180,19 +177,14 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnGetIfNotEnabled) {
 }
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetBeforeCreate) {
-    Horizon::enable_global_access(true);
-
     BOOST_CHECK_THROW(
         Horizon & horizon1 = Horizon::get(),
-        boost::singularity_not_created
+        boost::singularity_no_global_access
     );
-    Horizon::enable_global_access(false);
 }
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetAfterDestroy) {
-    Horizon::enable_global_access(true);
-
-    Horizon & horizon = Horizon::create();
+    Horizon & horizon = Horizon::create_enable_get();
     (void)horizon;
 
     Horizon::destroy();
@@ -200,7 +192,6 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnGetAfterDestroy) {
         Horizon & noHorizon = Horizon::get(),
         boost::singularity_not_created
     );
-    Horizon::enable_global_access(false);
 }
 
 BOOST_AUTO_TEST_CASE(demonstrateMultiThreadedUsage) {
@@ -210,16 +201,13 @@ BOOST_AUTO_TEST_CASE(demonstrateMultiThreadedUsage) {
 }
 
 BOOST_AUTO_TEST_CASE(demonstrateGlobalMultiThreadedUsage) {
-    HorizonThreadSafe::enable_global_access(true);
-
-    HorizonThreadSafe & horizon = HorizonThreadSafe::create();
+    HorizonThreadSafe & horizon = HorizonThreadSafe::create_enable_get();
     (void)horizon;
 
     HorizonThreadSafe & SameHorizon = HorizonThreadSafe::get();
     (void)SameHorizon;
 
     HorizonThreadSafe::destroy();
-    HorizonThreadSafe::enable_global_access(false);
 }
 
 } // namespace anonymous

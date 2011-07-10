@@ -10,10 +10,10 @@
 //!
 //! Unlike Singleton, singularity does not force global access, nor does it
 //! require that the class have a default constructor.  The lifetime of the
-//! object is simply defined between create() and destroy().
+//! object is simply defined between ::create() and ::destroy().
 //! An object created with singularity must be passed into objects which depend
-//! on them, just like any other object.  Unless using the "global_access"
-//! policy, in which case global access to the object is provided.
+//! on them, just like any other object.  Unless created with
+//! ::create_enable_get(), in which case the object is accessible with ::get().
 //----------------------------------------------------------------------------
 //  Event event;
 //
@@ -107,21 +107,17 @@ namespace detail {
 // model, or access policy, only one singularity of type T can be created.
 template <class T> struct singularity_instance
 {
-    static bool global_access;
+    static bool get_enabled;
     static ::boost::scoped_ptr<T> ptr;
 };
 
-template <class T> bool singularity_instance<T>::global_access = false;
+template <class T> bool singularity_instance<T>::get_enabled = false;
 template <class T> ::boost::scoped_ptr<T> singularity_instance<T>::ptr(0);
 
 } // detail namespace
 
 // And now, presenting the singularity class itself.
-template
-<
-    class T,
-    template <class T> class M = single_threaded
->
+template <class T, template <class T> class M = single_threaded>
 class singularity
 {
 public:
@@ -142,16 +138,38 @@ public:
         \
         verify_not_created(); \
         \
+        detail::singularity_instance<T>::get_enabled = false; \
+        detail::singularity_instance<T>::ptr.reset(new T(BOOST_PP_ENUM_PARAMS(na, arg))); \
+        return *detail::singularity_instance<T>::ptr; \
+    }
+
+#define SINGULARITY_CREATE_ENABLE_GET_BODY(z, fi, na) \
+    BOOST_PP_IF(na,template <,) BOOST_PP_ENUM_PARAMS(na, class A) BOOST_PP_IF(na,>,) \
+    static inline T& create_enable_get( BOOST_PP_REPEAT(na, SINGULARITY_CREATE_ARGUMENTS, fi) ) \
+    { \
+        M<T> guard; \
+        (void)guard; \
+        \
+        verify_not_created(); \
+        \
+        detail::singularity_instance<T>::get_enabled = true; \
         detail::singularity_instance<T>::ptr.reset(new T(BOOST_PP_ENUM_PARAMS(na, arg))); \
         return *detail::singularity_instance<T>::ptr; \
     }
 
 #define SINGULARITY_CREATE_OVERLOADS(z, na, text) BOOST_PP_REPEAT(BOOST_PP_POW2(na), SINGULARITY_CREATE_BODY, na)
+#define SINGULARITY_CREATE_ENABLE_GET_OVERLOADS(z, na, text) BOOST_PP_REPEAT(BOOST_PP_POW2(na), SINGULARITY_CREATE_ENABLE_GET_BODY, na)
 
-BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), SINGULARITY_CREATE_OVERLOADS, _)
+BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
+                SINGULARITY_CREATE_OVERLOADS, _)
+
+BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
+                SINGULARITY_CREATE_ENABLE_GET_OVERLOADS, _)
 
 #undef SINGULARITY_CREATE_OVERLOADS
+#undef SINGULARITY_CREATE_ENABLE_GET_OVERLOADS
 #undef SINGULARITY_CREATE_BODY
+#undef SINGULARITY_CREATE_ENABLE_GET_BODY
 #undef SINGULARITY_CREATE_ARGUMENTS
 
 // Generates: Family of create(...) functions
@@ -166,14 +184,36 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), SINGUL
         \
         verify_not_created(); \
         \
+        detail::singularity_instance<T>::get_enabled = false; \
         detail::singularity_instance<T>::ptr.reset(new T(BOOST_PP_ENUM_PARAMS(n, arg))); \
         return *detail::singularity_instance<T>::ptr; \
     }
 
-BOOST_PP_REPEAT_FROM_TO(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), BOOST_SINGULARITY_NONCONST_REFERENCE_ARG_SIZE, SINGULARITY_CREATE_BODY, _)
+#define SINGULARITY_CREATE_ENABLE_GET_BODY(z, n, text) \
+    BOOST_PP_IF(n,template <,) BOOST_PP_ENUM_PARAMS(n, class A) BOOST_PP_IF(n,>,) \
+    static inline T& create_enable_get( BOOST_PP_REPEAT(n, SINGULARITY_CREATE_ARGUMENTS, _) ) \
+    { \
+        M<T> guard; \
+        (void)guard; \
+        \
+        verify_not_created(); \
+        \
+        detail::singularity_instance<T>::get_enabled = true; \
+        detail::singularity_instance<T>::ptr.reset(new T(BOOST_PP_ENUM_PARAMS(n, arg))); \
+        return *detail::singularity_instance<T>::ptr; \
+    }
+
+    BOOST_PP_REPEAT_FROM_TO(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
+                            BOOST_SINGULARITY_NONCONST_REFERENCE_ARG_SIZE, \
+                            SINGULARITY_CREATE_BODY, _)
+
+    BOOST_PP_REPEAT_FROM_TO(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
+                            BOOST_SINGULARITY_NONCONST_REFERENCE_ARG_SIZE, \
+                            SINGULARITY_CREATE_ENABLE_GET_BODY, _)
 
 #undef SINGULARITY_CREATE_ARGUMENTS
 #undef SINGULARITY_CREATE_BODY
+#undef SINGULARITY_CREATE_ENABLE_GET_BODY
 
     static inline void destroy()
     {
@@ -193,27 +233,17 @@ BOOST_PP_REPEAT_FROM_TO(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE)
         detail::singularity_instance<T>::ptr.reset();
     }
 
-    static inline void enable_global_access(bool is_global)
-    {
-        M<T> guard;
-        (void)guard;
-
-        verify_not_created();
-
-        detail::singularity_instance<T>::global_access = is_global;
-    }
-
     static inline T& get()
     {
         M<T> guard;
         (void)guard;
 
         #ifndef BOOST_NO_EXCEPTIONS
-        if (detail::singularity_instance<T>::global_access == false) {
+        if (detail::singularity_instance<T>::get_enabled == false) {
             throw singularity_no_global_access();
         }
         #else
-        BOOST_ASSERT(detail::singularity_instance<T>::global_access != false);
+        BOOST_ASSERT(detail::singularity_instance<T>::get_enabled != false);
         #endif
 
         #ifndef BOOST_NO_EXCEPTIONS

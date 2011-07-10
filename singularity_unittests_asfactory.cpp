@@ -149,16 +149,14 @@ BOOST_AUTO_TEST_CASE(callCreateAgainAfterPreviousIsDestroyed) {
 }
 
 BOOST_AUTO_TEST_CASE(demonstrateProperUseOfGet) {
-    singularity<Horizon>::enable_global_access(true);
 
-    Horizon & horizon = singularity<Horizon>::create();
+    Horizon & horizon = singularity<Horizon>::create_enable_get();
     (void)horizon;
 
     Horizon & SameHorizon = singularity<Horizon>::get();
     (void)SameHorizon;
 
     singularity<Horizon>::destroy();
-    singularity<Horizon>::enable_global_access(false);
 }
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetIfNotEnabled) {
@@ -174,19 +172,14 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnGetIfNotEnabled) {
 }
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetBeforeCreate) {
-    singularity<Horizon>::enable_global_access(true);
-
     BOOST_CHECK_THROW(
         Horizon & horizon1 = singularity<Horizon>::get(),
-        boost::singularity_not_created
+        boost::singularity_no_global_access
     );
-    singularity<Horizon>::enable_global_access(false);
 }
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetAfterDestroy) {
-    singularity<Horizon>::enable_global_access(true);
-
-    Horizon & horizon = singularity<Horizon>::create();
+    Horizon & horizon = singularity<Horizon>::create_enable_get();
     (void)horizon;
 
     singularity<Horizon>::destroy();
@@ -194,7 +187,6 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnGetAfterDestroy) {
         Horizon & noHorizon = singularity<Horizon>::get(),
         boost::singularity_not_created
     );
-    singularity<Horizon>::enable_global_access(false);
 }
 
 BOOST_AUTO_TEST_CASE(demonstrateMultiThreadedUsage) {
@@ -206,16 +198,13 @@ BOOST_AUTO_TEST_CASE(demonstrateMultiThreadedUsage) {
 BOOST_AUTO_TEST_CASE(demonstrateGlobalMultiThreadedUsage) {
     typedef singularity<Horizon, multi_threaded> singularityType;
 
-    singularityType::enable_global_access(true);
-
-    Horizon & horizon = singularityType::create();
+    Horizon & horizon = singularityType::create_enable_get();
     (void)horizon;
 
     Horizon & SameHorizon = singularityType::get();
     (void)SameHorizon;
 
     singularityType::destroy();
-    singularityType::enable_global_access(false);
 }
 
 } // namespace anonymous

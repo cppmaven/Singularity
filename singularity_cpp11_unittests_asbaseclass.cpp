@@ -19,67 +19,106 @@ using ::boost::noncopyable;
 // Some generic, non POD class.
 class Event : private noncopyable {
 public:
-    Event() {}
-private:
+    Event() : mValue(0) {}
+    Event(int xValue) : mValue(xValue) {}
+    int mValue;
 };
 
 // This class demonstrates making itself a Singularity,
 // by making its constructors private, and friending
-// the Singulariy using the convenience macro.
-class Horizon : public singularity<Horizon, single_threaded>, private noncopyable {
+// the Singularity.
+class Horizon : public singularity<Horizon>, private noncopyable {
 private:
-    Horizon()                 : mInt(0),    mEvent(),          mEventPtr(&mEvent),   mEventRef(mEvent)    {}
-    Horizon(int xInt)         : mInt(xInt), mEvent(),          mEventPtr(&mEvent),   mEventRef(mEvent)    {}
-    Horizon(Event& xEventRef) : mInt(0),    mEvent(),          mEventPtr(&mEvent),   mEventRef(xEventRef) {}
-    Horizon(Event* xEventPtr) : mInt(0),    mEvent(),          mEventPtr(xEventPtr), mEventRef(mEvent)    {}
-    Horizon(int xInt, Event* xEventPtr, Event& xEventRef)
-                              : mInt(xInt), mEvent(),          mEventPtr(xEventPtr), mEventRef(xEventRef) {}
-    int    mInt;
-    Event  mEvent;
-    Event* mEventPtr;
-    Event& mEventRef;
+    Horizon()                     : mEvent(0), mInt(0),    mEventRef(mEvent), mEventPtr(&mEvent), mConstEventRef(mEvent), mConstEventPtr(&mEvent) {}
+    Horizon(int xInt)             : mEvent(0), mInt(xInt), mEventRef(mEvent), mEventPtr(&mEvent), mConstEventRef(mEvent), mConstEventPtr(&mEvent) {}
+    Horizon(Event       & xEvent) : mEvent(0), mInt(0),    mEventRef(xEvent), mEventPtr(&mEvent), mConstEventRef(mEvent), mConstEventPtr(&mEvent) {}
+    Horizon(Event       * xEvent) : mEvent(0), mInt(0),    mEventRef(mEvent), mEventPtr(xEvent),  mConstEventRef(mEvent), mConstEventPtr(&mEvent) {}
+    Horizon(Event const & xEvent) : mEvent(0), mInt(0),    mEventRef(mEvent), mEventPtr(&mEvent), mConstEventRef(xEvent), mConstEventPtr(&mEvent) {}
+    Horizon(Event const * xEvent) : mEvent(0), mInt(0),    mEventRef(mEvent), mEventPtr(&mEvent), mConstEventRef(mEvent), mConstEventPtr(xEvent)  {}
+    Horizon(int xInt, Event & xEventRef, Event * xEventPtr,
+        Event const & xConstEventRef, Event const * xConstEventPtr)
+        :   mEvent(0), mInt(xInt), mEventRef(xEventRef), mEventPtr(xEventPtr),
+            mConstEventRef(xConstEventRef), mConstEventPtr(xConstEventPtr) {}
 
-    friend class singularity<Horizon, single_threaded>;
+    Event mEvent; // Used only to initialize the event references when the constructor does not supply one.
+
+public:
+    int           mInt;
+    Event &       mEventRef;
+    Event *       mEventPtr;
+    Event const & mConstEventRef;
+    Event const * mConstEventPtr;
+
+private:
+    friend class singularity<Horizon>;
 };
 
-BOOST_AUTO_TEST_CASE(passOneArgumentByValue) {
-    int value = 3;
-    Horizon::enable_global_access(true);
+class HorizonThreadSafe : public singularity<HorizonThreadSafe, multi_threaded>, private noncopyable {
+private:
+    HorizonThreadSafe() {}
+    friend class singularity<HorizonThreadSafe, multi_threaded>;
+};
 
+BOOST_AUTO_TEST_CASE(passOneArgumentByNonConstLValue) {
+    int value = 1;
     Horizon & horizon = Horizon::create(value);
-
-    (void)horizon;
-    Horizon & horizonGlobal = Horizon::get();
-    (void)horizonGlobal;
+    BOOST_CHECK_EQUAL(horizon.mInt, 1);
     Horizon::destroy();
-
-    Horizon::enable_global_access(false);
 }
 
-BOOST_AUTO_TEST_CASE(passOneArgumentByAddress) {
-    Event event;
-    Horizon & horizon = Horizon::create(&event);
-    (void)horizon;
+BOOST_AUTO_TEST_CASE(passOneArgumentByConstLValue) {
+    int const value = 2;
+    Horizon & horizon = Horizon::create(value);
+    BOOST_CHECK_EQUAL(horizon.mInt, 2);
+    Horizon::destroy();
+}
+
+BOOST_AUTO_TEST_CASE(passOneArgumentByNonConstRValue) {
+    Horizon & horizon = Horizon::create(3);
+    BOOST_CHECK_EQUAL(horizon.mInt, 3);
     Horizon::destroy();
 }
 
 BOOST_AUTO_TEST_CASE(passOneArgumentByReference) {
-    Event event;
+    Event event(4);
     Horizon & horizon = Horizon::create(event);
-    (void)horizon;
+    BOOST_CHECK_EQUAL(horizon.mEventRef.mValue, 4);
     Horizon::destroy();
 }
 
-BOOST_AUTO_TEST_CASE(passThreeArguments) {
-    int value = 3;
-    Event event;
-    typedef Horizon singularityType;
-    Horizon & horizon = singularityType::create(value, &event, event);
-    (void)horizon;
-    singularityType::destroy();
+BOOST_AUTO_TEST_CASE(passOneArgumentByConstReference) {
+    Event const event(5);
+    Horizon & horizon = Horizon::create(event);
+    BOOST_CHECK_EQUAL(horizon.mConstEventRef.mValue, 5);
+    Horizon::destroy();
 }
 
-BOOST_AUTO_TEST_CASE(shouldThrowOnDoubleCalls) {
+BOOST_AUTO_TEST_CASE(passOneArgumentByAddress) {
+    Event event(6);
+    Horizon & horizon = Horizon::create(&event);
+    BOOST_CHECK_EQUAL(horizon.mEventPtr->mValue, 6);
+    Horizon::destroy();
+}
+
+BOOST_AUTO_TEST_CASE(passOneArgumentByConstAddress) {
+    Event const event(7);
+    Horizon & horizon = Horizon::create(&event);
+    BOOST_CHECK_EQUAL(horizon.mConstEventPtr->mValue, 7);
+    Horizon::destroy();
+}
+
+BOOST_AUTO_TEST_CASE(passFiveArgumentsAvoidingNonConstRValues) {
+    Event event(11);
+    Horizon & horizon = Horizon::create(10, event, &event, event, &event);
+    BOOST_CHECK_EQUAL(horizon.mInt, 10);
+    BOOST_CHECK_EQUAL(horizon.mEventRef.mValue, 11);
+    BOOST_CHECK_EQUAL(horizon.mEventPtr->mValue, 11);
+    BOOST_CHECK_EQUAL(horizon.mConstEventRef.mValue, 11);
+    BOOST_CHECK_EQUAL(horizon.mConstEventPtr->mValue, 11);
+    Horizon::destroy();
+}
+
+BOOST_AUTO_TEST_CASE(shouldThrowIfCreateOrDestroyCalledTwice) {
     Horizon & horizon = Horizon::create();
     (void)horizon;
     BOOST_CHECK_THROW( // Call create() twice in a row
@@ -94,50 +133,80 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnDoubleCalls) {
     );
 }
 
-BOOST_AUTO_TEST_CASE(shouldThrowOnDoubleCallsWithDifferentArguments) {
+BOOST_AUTO_TEST_CASE(shouldThrowIfAnyCreateCalledTwice) {
     Horizon & horizon = Horizon::create();
     (void)horizon;
-    int value = 5;
     BOOST_CHECK_THROW( // Call create() twice in a row
-        Horizon & horizon2 = (Horizon::create(value)),
+        Horizon & horizon2 = (Horizon::create(2)),
         boost::singularity_already_created
     );
 
     Horizon::destroy();
-    BOOST_CHECK_THROW( // Call destroy() twice in a row
-        (Horizon::destroy()),
-        boost::singularity_already_destroyed
-    );
 }
 
-BOOST_AUTO_TEST_CASE(shouldCreateDestroyCreateDestroy) {
+BOOST_AUTO_TEST_CASE(callCreateAgainAfterPreviousIsDestroyed) {
     Horizon & horizon = Horizon::create();
     (void)horizon;
     Horizon::destroy();
-    Horizon & new_horizon = Horizon::create();
-    (void)new_horizon;
+    Horizon & tomorrows_horizon = Horizon::create();
+    (void)tomorrows_horizon;
+    Horizon::destroy();
+}
+
+BOOST_AUTO_TEST_CASE(demonstrateProperUseOfGet) {
+    Horizon & horizon = Horizon::create_enable_get();
+    (void)horizon;
+
+    Horizon & SameHorizon = Horizon::get();
+    (void)SameHorizon;
+
+    Horizon::destroy();
+}
+
+BOOST_AUTO_TEST_CASE(shouldThrowOnGetIfNotEnabled) {
+    Horizon & horizon = Horizon::create();
+    (void)horizon;
+
+    BOOST_CHECK_THROW(
+        Horizon & inaccessibleHorizon = Horizon::get(),
+        boost::singularity_no_global_access
+    );
+
     Horizon::destroy();
 }
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetBeforeCreate) {
-    Horizon::enable_global_access(true);
-
-    BOOST_CHECK_THROW( // Call get() before create()
+    BOOST_CHECK_THROW(
         Horizon & horizon1 = Horizon::get(),
-        boost::singularity_not_created
+        boost::singularity_no_global_access
     );
+}
 
-    Horizon & horizon2 = Horizon::create();
-    (void)horizon2;
-
-    Horizon & horizon3 = Horizon::get();
-    (void)horizon3;
+BOOST_AUTO_TEST_CASE(shouldThrowOnGetAfterDestroy) {
+    Horizon & horizon = Horizon::create_enable_get();
+    (void)horizon;
 
     Horizon::destroy();
-    BOOST_CHECK_THROW( // Call get() after destroy()
-        Horizon & horizon4 = Horizon::get(),
+    BOOST_CHECK_THROW(
+        Horizon & noHorizon = Horizon::get(),
         boost::singularity_not_created
     );
+}
+
+BOOST_AUTO_TEST_CASE(demonstrateMultiThreadedUsage) {
+    HorizonThreadSafe & horizon = HorizonThreadSafe::create();
+    (void)horizon;
+    HorizonThreadSafe::destroy();
+}
+
+BOOST_AUTO_TEST_CASE(demonstrateGlobalMultiThreadedUsage) {
+    HorizonThreadSafe & horizon = HorizonThreadSafe::create_enable_get();
+    (void)horizon;
+
+    HorizonThreadSafe & SameHorizon = HorizonThreadSafe::get();
+    (void)SameHorizon;
+
+    HorizonThreadSafe::destroy();
 }
 
 } // namespace anonymous

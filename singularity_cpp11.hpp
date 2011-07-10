@@ -59,20 +59,16 @@ namespace detail {
 // model, or access policy, only one singularity of type T can be created.
 template <class T> struct singularity_instance
 {
-    static bool global_access;
+    static bool get_enabled;
     static std::unique_ptr<T> ptr;
 };
 
-template <class T> bool singularity_instance<T>::global_access = false;
+template <class T> bool singularity_instance<T>::get_enabled = false;
 template <class T> std::unique_ptr<T> singularity_instance<T>::ptr(0);
 
 } // detail namespace
 
-template
-<
-    class T,
-    template <class T> class M = single_threaded
->
+template <class T, template <class T> class M = single_threaded>
 class singularity
 {
 public:
@@ -84,6 +80,20 @@ public:
 
         verify_not_created();
 
+        detail::singularity_instance<T>::get_enabled = false;
+        detail::singularity_instance<T>::ptr.reset(new T(std::forward<A>(args)...));
+        return *detail::singularity_instance<T>::ptr;
+    }
+
+    template <class ...A>
+    static inline T& create_enable_get(A && ...args)
+    {
+        M<T> guard;
+        (void)guard;
+
+        verify_not_created();
+
+        detail::singularity_instance<T>::get_enabled = true;
         detail::singularity_instance<T>::ptr.reset(new T(std::forward<A>(args)...));
         return *detail::singularity_instance<T>::ptr;
     }
@@ -106,27 +116,17 @@ public:
         detail::singularity_instance<T>::ptr.reset();
     }
 
-    static inline void enable_global_access(bool is_global)
-    {
-        M<T> guard;
-        (void)guard;
-
-        verify_not_created();
-
-        detail::singularity_instance<T>::global_access = is_global;
-    }
-
     static inline T& get()
     {
         M<T> guard;
         (void)guard;
 
         #ifndef BOOST_NO_EXCEPTIONS
-        if (detail::singularity_instance<T>::global_access == false) {
+        if (detail::singularity_instance<T>::get_enabled == false) {
             throw singularity_no_global_access();
         }
         #else
-        BOOST_ASSERT(detail::singularity_instance<T>::global_access != false);
+        BOOST_ASSERT(detail::singularity_instance<T>::get_enabled != false);
         #endif
 
         #ifndef BOOST_NO_EXCEPTIONS

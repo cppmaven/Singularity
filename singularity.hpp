@@ -26,7 +26,7 @@
 //  Usage as a Base Class:
 //
 //  class Horizon : public singularity<Horizon, multi_threaded>
-//  Horizon & horizonB = Horizon::create(value, &event, event);
+//  Horizon & horizonB = Horizon::create_enable_get(1, &event, event);
 //  Horizon & horizonC = Horizon::get();
 //                       Horizon::destroy();
 //----------------------------------------------------------------------------

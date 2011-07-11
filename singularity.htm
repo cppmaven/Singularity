@@ -270,7 +270,11 @@ To use a thread safe singularity as a base class, simply inherit from singularit
 </h2></div></div></div>
 
 <p>
-As a generic wrapper class, singularity needs to perfectly forward the arguments passed into create(), into the singularized class.  Unfortunately with C++03, this is not possible for an arbitrary number of arguments, without an O(2^n) implementation.  Therefore a design compromise was made, such that the user can define the maximum number of arguments that will be perfectly forwarded.  Constructors receiving additional arguments would be forwarded as non-const references.  The two arbitrary sizes are defined as follows:
+As a generic wrapper class, singularity needs to perfectly forward the arguments passed from the create() function, into the singularized class.  Unfortunately with C++03, this is not possible for an arbitrary number of arguments, without an O(2^n) implementation.  This is known as the <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm">forwarding problem</a>.
+</p>
+
+<p>
+Just like to Boost.Bind, most create() functions must receive their arguments as non-const references.  However, for functions requiring up to 3 arguments, all arguments will be perfectly forwarded.  The number of required create() functions is O(2^n), 2*2^(n+1)-1 to be exact, so the default upper limit of 3 arguments requires generating 30 functions.  Constructors which take additional arguments receive them as non-const references up to 10 arguments by default.
 </p>
 <pre class="programlisting">
 <span class="preprocessor">#ifndef</span> BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE
@@ -282,7 +286,7 @@ As a generic wrapper class, singularity needs to perfectly forward the arguments
 <span class="preprocessor">#endif</span>
 </pre>
 <p>
-These defines can be redefined by the user, as appropriate for their needs, and the forwarding create(...) functions will be generated as required.  An excellent discussion of perfect function forwarding and the limitations imposed by C++03 is given <a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm">here</a>.
+These arbitrary values can be redefined by the user before including the header, as appropriate for their needs.  The specified number of forwarding create(...) functions will be automatically generated as required.
 </p>
 
 </div>

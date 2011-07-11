@@ -82,7 +82,7 @@ struct singularity_no_global_access : virtual std::exception
 namespace detail {
 
 // This pointer only depends on type T, so regardless of the threading
-// model, or access policy, only one singularity of type T can be created.
+// model, only one singularity of type T can be created.
 template <class T> struct singularity_instance
 {
     static bool get_enabled;

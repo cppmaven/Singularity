@@ -274,7 +274,7 @@ As a generic wrapper class, singularity needs to perfectly forward the arguments
 </p>
 
 <p>
-Just like to Boost.Bind, most create() functions must receive their arguments as non-const references.  However, for functions requiring up to 3 arguments, all arguments will be perfectly forwarded.  The number of required create() functions is O(2^n), 2*2^(n+1)-1 to be exact, so the default upper limit of 3 arguments requires generating 30 functions.  Constructors which take additional arguments receive them as non-const references up to 10 arguments by default.
+Just like to Boost.Bind, most create() functions must receive their arguments as non-const references.  However, for functions requiring up to 3 arguments, all arguments will be perfectly forwarded.  The number of required create() functions is O(2^n), 2*(2^(n+1)-1) to be exact, so the default upper limit of 3 arguments requires generating 30 functions.  Constructors which take additional arguments receive them as non-const references up to 10 arguments by default.
 </p>
 <pre class="programlisting">
 <span class="preprocessor">#ifndef</span> BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE

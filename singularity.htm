@@ -39,6 +39,12 @@
 <dt><span class="section"><a href="#singularity.threadsafety">Enabling Thread Safety</a></span></dt>
 </dl></dd>
 <dt><span class="section"><a href="#singularity.limitations">Limitations</a></span></dt>
+<dt><span class="section"><a href="#singularity.customization">Customization</a></span></dt>
+<dd><dl>
+<dt><span class="section"><a href="#singularity.disableexceptions">Disabling Exceptions</a></span></dt>
+<dt><span class="section"><a href="#singularity.threadingpolicy">Threading Policy</a></span></dt>
+</dl></dd>
+<dt><span class="section"><a href="#singularity.references">References</a></span></dt>
 </dl>
 </div>
 
@@ -288,6 +294,71 @@ Just like to Boost.Bind, most create() functions must receive their arguments as
 <p>
 These arbitrary values can be redefined by the user before including the header, as appropriate for their needs.  The specified number of forwarding create(...) functions will be automatically generated as required.
 </p>
+</div>
+
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="singularity.customization"></a><a class="link" href="#singularity.customization" title="Customization">Customization</a>
+</h2></div></div></div>
+</div>
+
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="singularity.disableexceptions"></a><a class="link" href="#singularity.disableexceptions" title="Disabling Exceptions">Disabling Exceptions</a>
+</h2></div></div></div>
+<p>
+Exceptions may be disabled by defining BOOST_NO_EXCEPTIONS prior to compilation.  All throws will be replaced with BOOST_ASSERT().  This may be useful when tightly constrained for space, such as embedded projects on small microcontrollers.
+</p>
+</div>
+
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="singularity.threadingpolicy"></a><a class="link" href="#singularity.threadingpolicy" title="Threading Policy">Threading Policy</a>
+</h2></div></div></div>
+<p>
+The supplied thread safe policy of multi_threaded is defined as follows:
+</p>
+
+<pre class="programlisting">
+<span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">class</span> multi_threaded
+{
+<span class="keyword">public</span>:
+    <span class="keyword">inline</span> multi_threaded()
+    {
+        lockable.lock();
+    }
+    <span class="keyword">inline</span> ~multi_threaded()
+    {
+        lockable.unlock();
+    }
+<span class="keyword">private</span>:
+    <span class="keyword">static</span> ::boost::mutex lockable;
+};
+</pre>
+<p>
+Instantiation of this object creates an RAII style lock protecting access to the code in scope.  Developers on small microcontrollers which do not support exceptions, will be unable to use this policy object, as the boost::mutex requires exceptions to be enabled.  If for this, or any other reason, the developer is unable to use the supplied multi_threaded policy, an alternate policy can be implemented and supplied to singularity.  The new policy need only acquire a mutex on construction, and release it upon destruction.
+</p>
+</div>
+
+
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="singularity.references"></a><a class="link" href="#singularity.references" title="References">References</a>
+</h2></div></div></div>
+
+<ol> 
+<li><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm" target="_top">The Forwarding Problem</a>,
+        Peter Dimov, Howard E. Hinnant, Dave Abrahams, 2002</li> 
+<li><a href="http://en.wikipedia.org/wiki/Design_Patterns" target="_top">Design Patterns</a>,
+        Gamma et al. - Addison Wesley Publishing, 1995</li> 
+<li><a href="http://en.wikipedia.org/wiki/Modern_C%2B%2B_Design" target="_top">Modern C++ Design</a>,
+        Andrei Alexandrescu, 2001</li> 
+<li><a href="http://www.boost.org/doc/libs/1_46_1/libs/bind/bind.html" target="_top">Boost.Bind</a>,
+        Peter Dimov, 2001-2005</li> 
+</ol>
 
 </div>
 

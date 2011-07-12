@@ -22,7 +22,7 @@
 <div><div class="legalnotice">
 <a name="id1268168"></a><p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
-        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+        file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_blank">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
 </div></div>
 </div></div>
@@ -230,7 +230,7 @@ int main()
 </h3></div></div></div>
 
 <p>
-To enable thread safety, supply a second template argument to singlarity as "multi_threaded".  An example is shown below:
+To enable thread safety, supply a second template argument to singularity as "multi_threaded".  An example is shown below:
 </p>
 <pre class="programlisting">
 <span class="preprocessor">#include</span> &lt;singularity.hpp&gt;
@@ -267,6 +267,9 @@ To use a thread safe singularity as a base class, inherit from singularity as sh
 <pre class="programlisting">
 <span class="keyword">class</span> Horizon : <span class="keyword">public</span> singularity&lt;Horizon, multi_threaded&gt;
 </pre>
+<p>
+Because the Double-Checked Locking Pattern is not both thread-safe and portable (see Reference 2), the multi_threaded policy mutex is always acquired when calling on any member function of singularity.  Due to the performance impact of acquiring a mutex, it is recommended that get_global() be called infrequently, and the returned reference stored for later use.
+</p>
 </div>
 
 
@@ -350,13 +353,17 @@ Instantiation of this object creates an RAII style lock protecting access to the
 </h2></div></div></div>
 
 <ol> 
-<li><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm" target="_top">The Forwarding Problem</a>,
+<li><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm" target="_blank">The Forwarding Problem</a>,
         Peter Dimov, Howard E. Hinnant, Dave Abrahams, 2002</li> 
-<li><a href="http://en.wikipedia.org/wiki/Design_Patterns" target="_top">Design Patterns</a>,
+<li><a href="http://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf" target="_blank">C++ and the Perils of Double-Checked Locking</a>,
+        Scott Meyers and Andrei Alexandrescu, 2004</li>
+<li><a href="http://software.intel.com/en-us/blogs/2007/11/30/volatile-almost-useless-for-multi-threaded-programming/" target="_blank">Volatile: Almost Useless for Multi-Threaded Programming</a>,
+         Arch Robison, 2007</li>
+<li><a href="http://en.wikipedia.org/wiki/Design_Patterns" target="_blank">Design Patterns</a>,
         Gamma et al. - Addison Wesley Publishing, 1995</li> 
-<li><a href="http://en.wikipedia.org/wiki/Modern_C%2B%2B_Design" target="_top">Modern C++ Design</a>,
+<li><a href="http://en.wikipedia.org/wiki/Modern_C%2B%2B_Design" target="_blank">Modern C++ Design</a>,
         Andrei Alexandrescu, 2001</li> 
-<li><a href="http://www.boost.org/doc/libs/1_46_1/libs/bind/bind.html" target="_top">Boost.Bind</a>,
+<li><a href="http://www.boost.org/doc/libs/1_46_1/libs/bind/bind.html" target="_blank">Boost.Bind</a>,
         Peter Dimov, 2001-2005</li> 
 </ol>
 

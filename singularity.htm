@@ -191,7 +191,7 @@ int main()
 </h3></div></div></div>
 
 <p>
-To enable global access to the instance through the get_global() member function, simply use create_global() instead of create() when instantiating the object.  An example is shown:
+To enable global access to the instance through the get_global() member function, use create_global() instead of create() when instantiating the object.  An example is shown:
 </p>
 <pre class="programlisting">
 <span class="preprocessor">#include</span> &lt;singularity.hpp&gt;
@@ -230,7 +230,7 @@ int main()
 </h3></div></div></div>
 
 <p>
-To enable thread safety, simply supply a the second template argument to singlarity as "multi_threaded".  An example is shown below:
+To enable thread safety, supply a second template argument to singlarity as "multi_threaded".  An example is shown below:
 </p>
 <pre class="programlisting">
 <span class="preprocessor">#include</span> &lt;singularity.hpp&gt;
@@ -262,7 +262,7 @@ int main()
 }
 </pre>
 <p>
-To use a thread safe singularity as a base class, simply inherit from singularity as shown below:
+To use a thread safe singularity as a base class, inherit from singularity as shown below:
 </p>
 <pre class="programlisting">
 <span class="keyword">class</span> Horizon : <span class="keyword">public</span> singularity&lt;Horizon, multi_threaded&gt;

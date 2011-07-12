@@ -64,12 +64,12 @@ The ability to restrict a class to a single instance is an important technique. 
 
 <ol>
 <li>Lifetime: Singleton introduces lifetime management complexities.  The undefined destruction order of multiple singletons is just one example.</li>
-<li>Encapsulation: Singletons are globally accessible.  Accessibility should be orthogonal to restrictions on the number of instances.</li>
+<li>Scope: Singletons are always globally accessible.  Accessibility should be orthogonal to restrictions on the number of instances.</li>
 <li>Initialization: Singletons typically restricts the class to the default constructor.  This makes Singleton difficult for classes which require non-default constructors.</li>
 </ol>
 
 <p>
-Like Singleton, Singularity restricts a class to a single instance.  However Singularity does not suffer from lifetime, encapsulation and initialization problems.  The following are the advantages of Singularity over Singleton:
+Like Singleton, Singularity restricts a class to a single instance.  However Singularity does not suffer from lifetime, scoping and initialization problems.  The following are the advantages of Singularity over Singleton:
 </p>
 
 <ol>
@@ -90,7 +90,7 @@ To use Singularity, either as a factory or a base class, the class which is to b
 </p>
 <pre class="programlisting">
 <span class="preprocessor">#define</span> FRIEND_CLASS_SINGULARITY \
-    <span class="keyword">template</span> &lt<span class="keyword">class</span> T, <span class="keyword">template</span> &lt<span class="keyword">class</span> T&gt <span class="keyword">class</span> M&gt <span class="keyword">friend</span> <span class="keyword">class</span> singularity
+    <span class="keyword">template</span> &lt;<span class="keyword">class</span> T, <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">class</span> M&gt; <span class="keyword">friend</span> <span class="keyword">class</span> singularity
 </pre>
 </div>
 
@@ -104,7 +104,7 @@ To use Singularity, either as a factory or a base class, the class which is to b
 Usage as a factory is shown as follows:
 </p>
 <pre class="programlisting">
-<span class="preprocessor">#include</span> &ltsingularity.hpp&gt
+<span class="preprocessor">#include</span> &lt;singularity.hpp&gt;
 
 <span class="keyword">using</span> ::boost::singularity;
 
@@ -122,14 +122,14 @@ Usage as a factory is shown as follows:
 int main()
 {
     <span class="comment">// Create using the default constructor.</span>
-    Horizon & firstHorizon = singularity&ltHorizon&gt::create();
+    Horizon & firstHorizon = singularity&lt;Horizon&gt;::create();
     <span class="comment">// Use the firstHorizon here...</span>
-    singularity&ltHorizon&gt::destroy();
+    singularity&lt;Horizon&gt;::destroy();
 	
     <span class="comment">// Create using a non-default constructor.</span>
-    Horizon & secondHorizon = singularity&ltHorizon&gt::create(7);
+    Horizon & secondHorizon = singularity&lt;Horizon&gt;::create(7);
     <span class="comment">// Use the secondHorizon here...</span>
-    singularity&ltHorizon&gt::destroy();
+    singularity&lt;Horizon&gt;::destroy();
 
     <span class="keyword">return</span> 0;
 }
@@ -146,14 +146,14 @@ int main()
 Usage as a base class is shown as follows:
 </p>
 <pre class="programlisting">
-<span class="preprocessor">#include</span> &ltsingularity.hpp&gt
+<span class="preprocessor">#include</span> &lt;singularity.hpp&gt;
 
 <span class="keyword">using</span> ::boost::singularity;
 
 <span class="comment">// This is the class which will be singularized.</span>
 <span class="comment">// Notice the private constructors and friend statement.</span>
 <span class="comment">// Also notice the curiously recurring template pattern.</span>
-<span class="keyword">class</span> Horizon : <span class="keyword">public</span> singularity&ltHorizon&gt
+<span class="keyword">class</span> Horizon : <span class="keyword">public</span> singularity&lt;Horizon&gt;
 {
 <span class="keyword">private</span>:
     Horizon() {}
@@ -188,7 +188,7 @@ int main()
 To enable global access to the instance through the get() member function, simply use create_enable_get() instead of create() when instantiating the object.  An example is shown:
 </p>
 <pre class="programlisting">
-<span class="preprocessor">#include</span> &ltsingularity.hpp&gt
+<span class="preprocessor">#include</span> &lt;singularity.hpp&gt;
 
 <span class="keyword">using</span> ::boost::singularity;
 
@@ -204,13 +204,13 @@ To enable global access to the instance through the get() member function, simpl
 int main()
 {
     <span class="comment">// Create using the default constructor.</span>
-    Horizon & horizon = singularity&ltHorizon&gt::create_enable_get();
+    Horizon & horizon = singularity&lt;Horizon&gt;::create_enable_get();
     {
         <span class="comment">// Someplace far away in the code.</span>
-        Horizon & sameHorizon = singularity&ltHorizon&gt::get();
+        Horizon & sameHorizon = singularity&lt;Horizon&gt;::get();
         <span class="comment">// Use the sameHorizon here...</span>
     }
-    singularity&ltHorizon&gt::destroy();
+    singularity&lt;Horizon&gt;::destroy();
 
     <span class="keyword">return</span> 0;
 }
@@ -227,7 +227,7 @@ int main()
 To enable thread safety, simply supply a the second template argument to singlarity as "multi_threaded".  An example is shown below:
 </p>
 <pre class="programlisting">
-<span class="preprocessor">#include</span> &ltsingularity.hpp&gt
+<span class="preprocessor">#include</span> &lt;singularity.hpp&gt;
 
 <span class="keyword">using</span> ::boost::singularity;
 <span class="keyword">using</span> ::boost::multi_threaded;
@@ -244,13 +244,13 @@ To enable thread safety, simply supply a the second template argument to singlar
 int main()
 {
     <span class="comment">// Create using the default constructor.</span>
-    Horizon & horizon = singularity&ltHorizon, multi_threaded&gt::create_enable_get();
+    Horizon & horizon = singularity&lt;Horizon, multi_threaded&gt;::create_enable_get();
     {
         <span class="comment">// Someplace far away in the code.</span>
-        Horizon & sameHorizon = singularity&ltHorizon, multi_threaded&gt::get();
+        Horizon & sameHorizon = singularity&lt;Horizon, multi_threaded&gt;::get();
         <span class="comment">// Use the sameHorizon here...</span>
     }
-    singularity&ltHorizon, multi_threaded&gt::destroy();
+    singularity&lt;Horizon, multi_threaded&gt;::destroy();
 
     <span class="keyword">return</span> 0;
 }
@@ -259,7 +259,7 @@ int main()
 To use a thread safe singularity as a base class, simply inherit from singularity as shown below:
 </p>
 <pre class="programlisting">
-<span class="keyword">class</span> Horizon : <span class="keyword">public</span> singularity&ltHorizon, multi_threaded&gt
+<span class="keyword">class</span> Horizon : <span class="keyword">public</span> singularity&lt;Horizon, multi_threaded&gt;
 </pre>
 </div>
 

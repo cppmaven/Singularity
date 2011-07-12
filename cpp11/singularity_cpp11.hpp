@@ -13,7 +13,7 @@
 //! object is simply defined between ::create() and ::destroy().
 //! An object created with singularity must be passed into objects which depend
 //! on them, just like any other object.  Unless created with
-//! ::create_enable_get(), in which case the object is accessible with ::get().
+//! ::create_global(), in which case the object is accessible with ::get_global().
 //----------------------------------------------------------------------------
 //  Event event;
 //
@@ -25,8 +25,8 @@
 //  Usage as a Base Class:
 //
 //  class Horizon : public singularity<Horizon, multi_threaded>
-//  Horizon & horizonB = Horizon::create_enable_get(1, &event, event);
-//  Horizon & horizonC = Horizon::get();
+//  Horizon & horizonB = Horizon::create_global(1, &event, event);
+//  Horizon & horizonC = Horizon::get_global();
 //                       Horizon::destroy();
 //----------------------------------------------------------------------------
 
@@ -112,7 +112,7 @@ public:
     }
 
     template <class ...A>
-    static inline T& create_enable_get(A && ...args)
+    static inline T& create_global(A && ...args)
     {
         M<T> guard;
         (void)guard;
@@ -142,7 +142,7 @@ public:
         detail::singularity_instance<T>::ptr.reset();
     }
 
-    static inline T& get()
+    static inline T& get_global()
     {
         M<T> guard;
         (void)guard;

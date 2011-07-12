@@ -80,7 +80,7 @@ Like Singleton, Singularity restricts a class to a single instance.  However Sin
 
 <ol>
 <li>The lifetime of the single object is bounded by calls to create() and destroy().  This lifetime is managed similiarly to objects bounded by calls to new() and delete().</li>
-<li>Singularity does not force global access to the instance.  If global access is required, then a globally accessible get() function can be enabled upon creation of the instance.</li>
+<li>Singularity does not force global access to the instance.  If global access is required, then a globally accessible get_global() function can be enabled upon creation of the instance.</li>
 <li>Singularities of objects can be created using any available constructor for that object.</li>
 </ol>
 
@@ -191,7 +191,7 @@ int main()
 </h3></div></div></div>
 
 <p>
-To enable global access to the instance through the get() member function, simply use create_enable_get() instead of create() when instantiating the object.  An example is shown:
+To enable global access to the instance through the get_global() member function, simply use create_global() instead of create() when instantiating the object.  An example is shown:
 </p>
 <pre class="programlisting">
 <span class="preprocessor">#include</span> &lt;singularity.hpp&gt;
@@ -210,10 +210,10 @@ To enable global access to the instance through the get() member function, simpl
 int main()
 {
     <span class="comment">// Create using the default constructor.</span>
-    Horizon & horizon = singularity&lt;Horizon&gt;::create_enable_get();
+    Horizon & horizon = singularity&lt;Horizon&gt;::create_global();
     {
         <span class="comment">// Someplace far away in the code.</span>
-        Horizon & sameHorizon = singularity&lt;Horizon&gt;::get();
+        Horizon & sameHorizon = singularity&lt;Horizon&gt;::get_global();
         <span class="comment">// Use the sameHorizon here...</span>
     }
     singularity&lt;Horizon&gt;::destroy();
@@ -250,10 +250,10 @@ To enable thread safety, simply supply a the second template argument to singlar
 int main()
 {
     <span class="comment">// Create using the default constructor.</span>
-    Horizon & horizon = singularity&lt;Horizon, multi_threaded&gt;::create_enable_get();
+    Horizon & horizon = singularity&lt;Horizon, multi_threaded&gt;::create_global();
     {
         <span class="comment">// Someplace far away in the code.</span>
-        Horizon & sameHorizon = singularity&lt;Horizon, multi_threaded&gt;::get();
+        Horizon & sameHorizon = singularity&lt;Horizon, multi_threaded&gt;::get_global();
         <span class="comment">// Use the sameHorizon here...</span>
     }
     singularity&lt;Horizon, multi_threaded&gt;::destroy();

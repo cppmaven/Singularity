@@ -13,7 +13,7 @@
 //! object is simply defined between ::create() and ::destroy().
 //! An object created with singularity must be passed into objects which depend
 //! on them, just like any other object.  Unless created with
-//! ::create_enable_get(), in which case the object is accessible with ::get().
+//! ::create_global(), in which case the object is accessible with ::get().
 //----------------------------------------------------------------------------
 //  Event event;
 //
@@ -25,8 +25,8 @@
 //  Usage as a Base Class:
 //
 //  class Horizon : public singularity<Horizon, multi_threaded>
-//  Horizon & horizonB = Horizon::create_enable_get(1, &event, event);
-//  Horizon & horizonC = Horizon::get();
+//  Horizon & horizonB = Horizon::create_global(1, &event, event);
+//  Horizon & horizonC = Horizon::get_global();
 //                       Horizon::destroy();
 //----------------------------------------------------------------------------
 
@@ -144,7 +144,7 @@ public:
 
 #define SINGULARITY_CREATE_ENABLE_GET_BODY(z, fi, na) \
     BOOST_PP_IF(na,template <,) BOOST_PP_ENUM_PARAMS(na, class A) BOOST_PP_IF(na,>,) \
-    static inline T& create_enable_get( BOOST_PP_REPEAT(na, SINGULARITY_CREATE_ARGUMENTS, fi) ) \
+    static inline T& create_global( BOOST_PP_REPEAT(na, SINGULARITY_CREATE_ARGUMENTS, fi) ) \
     { \
         M<T> guard; \
         (void)guard; \
@@ -190,7 +190,7 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
 
 #define SINGULARITY_CREATE_ENABLE_GET_BODY(z, n, text) \
     BOOST_PP_IF(n,template <,) BOOST_PP_ENUM_PARAMS(n, class A) BOOST_PP_IF(n,>,) \
-    static inline T& create_enable_get( BOOST_PP_REPEAT(n, SINGULARITY_CREATE_ARGUMENTS, _) ) \
+    static inline T& create_global( BOOST_PP_REPEAT(n, SINGULARITY_CREATE_ARGUMENTS, _) ) \
     { \
         M<T> guard; \
         (void)guard; \
@@ -232,7 +232,7 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
         detail::singularity_instance<T>::ptr.reset();
     }
 
-    static inline T& get()
+    static inline T& get_global()
     {
         M<T> guard;
         (void)guard;

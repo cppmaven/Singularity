@@ -149,10 +149,10 @@ BOOST_AUTO_TEST_CASE(callCreateAgainAfterPreviousIsDestroyed) {
 
 BOOST_AUTO_TEST_CASE(demonstrateProperUseOfGet) {
 
-    Horizon & horizon = singularity<Horizon>::create_enable_get();
+    Horizon & horizon = singularity<Horizon>::create_global();
     (void)horizon;
 
-    Horizon & SameHorizon = singularity<Horizon>::get();
+    Horizon & SameHorizon = singularity<Horizon>::get_global();
     (void)SameHorizon;
 
     singularity<Horizon>::destroy();
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnGetIfNotEnabled) {
     (void)horizon;
 
     BOOST_CHECK_THROW(
-        Horizon & inaccessibleHorizon = singularity<Horizon>::get(),
+        Horizon & inaccessibleHorizon = singularity<Horizon>::get_global(),
         boost::singularity_no_global_access
     );
 
@@ -172,18 +172,18 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnGetIfNotEnabled) {
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetBeforeCreate) {
     BOOST_CHECK_THROW(
-        Horizon & horizon1 = singularity<Horizon>::get(),
+        Horizon & horizon1 = singularity<Horizon>::get_global(),
         boost::singularity_no_global_access
     );
 }
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetAfterDestroy) {
-    Horizon & horizon = singularity<Horizon>::create_enable_get();
+    Horizon & horizon = singularity<Horizon>::create_global();
     (void)horizon;
 
     singularity<Horizon>::destroy();
     BOOST_CHECK_THROW(
-        Horizon & noHorizon = singularity<Horizon>::get(),
+        Horizon & noHorizon = singularity<Horizon>::get_global(),
         boost::singularity_not_created
     );
 }
@@ -197,10 +197,10 @@ BOOST_AUTO_TEST_CASE(demonstrateMultiThreadedUsage) {
 BOOST_AUTO_TEST_CASE(demonstrateGlobalMultiThreadedUsage) {
     typedef singularity<Horizon, multi_threaded> singularityType;
 
-    Horizon & horizon = singularityType::create_enable_get();
+    Horizon & horizon = singularityType::create_global();
     (void)horizon;
 
-    Horizon & SameHorizon = singularityType::get();
+    Horizon & SameHorizon = singularityType::get_global();
     (void)SameHorizon;
 
     singularityType::destroy();

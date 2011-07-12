@@ -155,10 +155,10 @@ BOOST_AUTO_TEST_CASE(callCreateAgainAfterPreviousIsDestroyed) {
 }
 
 BOOST_AUTO_TEST_CASE(demonstrateProperUseOfGet) {
-    Horizon & horizon = Horizon::create_enable_get();
+    Horizon & horizon = Horizon::create_global();
     (void)horizon;
 
-    Horizon & SameHorizon = Horizon::get();
+    Horizon & SameHorizon = Horizon::get_global();
     (void)SameHorizon;
 
     Horizon::destroy();
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnGetIfNotEnabled) {
     (void)horizon;
 
     BOOST_CHECK_THROW(
-        Horizon & inaccessibleHorizon = Horizon::get(),
+        Horizon & inaccessibleHorizon = Horizon::get_global(),
         boost::singularity_no_global_access
     );
 
@@ -178,18 +178,18 @@ BOOST_AUTO_TEST_CASE(shouldThrowOnGetIfNotEnabled) {
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetBeforeCreate) {
     BOOST_CHECK_THROW(
-        Horizon & horizon1 = Horizon::get(),
+        Horizon & horizon1 = Horizon::get_global(),
         boost::singularity_no_global_access
     );
 }
 
 BOOST_AUTO_TEST_CASE(shouldThrowOnGetAfterDestroy) {
-    Horizon & horizon = Horizon::create_enable_get();
+    Horizon & horizon = Horizon::create_global();
     (void)horizon;
 
     Horizon::destroy();
     BOOST_CHECK_THROW(
-        Horizon & noHorizon = Horizon::get(),
+        Horizon & noHorizon = Horizon::get_global(),
         boost::singularity_not_created
     );
 }
@@ -201,10 +201,10 @@ BOOST_AUTO_TEST_CASE(demonstrateMultiThreadedUsage) {
 }
 
 BOOST_AUTO_TEST_CASE(demonstrateGlobalMultiThreadedUsage) {
-    HorizonThreadSafe & horizon = HorizonThreadSafe::create_enable_get();
+    HorizonThreadSafe & horizon = HorizonThreadSafe::create_global();
     (void)horizon;
 
-    HorizonThreadSafe & SameHorizon = HorizonThreadSafe::get();
+    HorizonThreadSafe & SameHorizon = HorizonThreadSafe::get_global();
     (void)SameHorizon;
 
     HorizonThreadSafe::destroy();

@@ -4,8 +4,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-//#define BOOST_TEST_MAIN defined
+#define BOOST_TEST_MAIN defined
 #include <boost/test/unit_test.hpp>
+#include <boost/ref.hpp>
 #include <boost/noncopyable.hpp>
 #include <singularity.hpp>
 
@@ -24,7 +25,6 @@ public:
     Event(int xValue) : mValue(xValue) {}
     int mValue;
 };
-
 // This class demonstrates making itself a Singularity,
 // by making its constructors private, and friending
 // the Singularity.
@@ -44,20 +44,31 @@ private:
     Event mEvent; // Used only to initialize the event references when the constructor does not supply one.
 
 public:
-    int           mInt;
+	~Horizon() {}
+	int           mInt;
     Event &       mEventRef;
     Event *       mEventPtr;
     Event const & mConstEventRef;
     Event const * mConstEventPtr;
 
 private:
+#ifdef MSVC2010
+    friend singularity<Horizon>;
+#else
     friend class singularity<Horizon>;
+#endif
 };
 
 class HorizonThreadSafe : public singularity<HorizonThreadSafe, multi_threaded>, private noncopyable {
 private:
     HorizonThreadSafe() {}
+//    typedef singularity BaseType;
+//    friend class BaseType;
+#ifdef MSVC2010
+    friend singularity<HorizonThreadSafe, multi_threaded>;
+#else
     friend class singularity<HorizonThreadSafe, multi_threaded>;
+#endif
 };
 
 BOOST_AUTO_TEST_CASE(passOneArgumentByNonConstLValue) {

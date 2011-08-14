@@ -268,7 +268,7 @@ To use a thread safe singularity as a base class, inherit from singularity as sh
 <span class="keyword">class</span> Horizon : <span class="keyword">public</span> singularity&lt;Horizon, multi_threaded&gt;
 </pre>
 <p>
-Because the Double-Checked Locking Pattern is not both thread-safe and portable (see Reference 2), the multi_threaded policy mutex is always acquired when calling on any member function of singularity.  Due to the performance impact of acquiring a mutex, it is recommended that get_global() be called infrequently, and the returned reference stored for later use.
+Because the Double-Checked Locking Pattern is not both thread-safe and portable (see Reference 2), the multi_threaded policy mutex is always acquired when calling on any member function of singularity.  When using the singularity with create_global(), due to the performance impact of acquiring a mutex, it is recommended that get_global() be called infrequently, and the returned reference stored for later use.
 </p>
 </div>
 

@@ -4,8 +4,9 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#define BOOST_TEST_MAIN defined
+//#define BOOST_TEST_MAIN defined
 #include <boost/test/unit_test.hpp>
+#include <boost/ref.hpp>
 #include <boost/noncopyable.hpp>
 #include <singularity.hpp>
 
@@ -44,6 +45,7 @@ private:
     Event mEvent; // Used only to initialize the event references when the constructor does not supply one.
 
 public:
+	~Horizon() {}
     int           mInt;
     Event &       mEventRef;
     Event *       mEventPtr;

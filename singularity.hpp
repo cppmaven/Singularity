@@ -49,8 +49,8 @@
 #include <boost/preprocessor/arithmetic/div.hpp>
 #include <boost/preprocessor/arithmetic/mod.hpp>
 #include <boost/mpl/assert.hpp>
-#include <detail/pow2.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <detail/pow2.hpp>
 
 #include <singularity_policies.hpp>
 
@@ -228,7 +228,6 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
         BOOST_ASSERT((detail::singularity_instance<T>::ptr.get() != 0));
         #endif
 
-        delete detail::singularity_instance<T>::ptr.get();
         detail::singularity_instance<T>::ptr.reset();
     }
 
@@ -271,7 +270,7 @@ private:
 };
 
 // Convenience macro which generates the required friend statement
-// for use inside classes which are created by singularity_implicit.
+// for use inside classes which use singularity as a factory.
 #define FRIEND_CLASS_SINGULARITY \
     template <class T, template <class T> class M> friend class singularity
 

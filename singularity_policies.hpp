@@ -7,15 +7,7 @@
 #ifndef SINGULARITY_POLICIES_HPP
 #define SINGULARITY_POLICIES_HPP
 
-// Certain developers cannot use exceptions, therefore this class
-// can be defined to use assertions instead.
-#ifndef BOOST_NO_EXCEPTIONS
-#include <exception>
 #include <boost/thread/mutex.hpp>
-#else
-#include <boost/assert.hpp>
-#endif
-#include <boost/scoped_ptr.hpp>
 
 namespace boost {
 
@@ -29,10 +21,7 @@ template <class T> class single_threaded {};
 
 // Users of singularity are encouraged to develop their own
 // thread-safe policies which meet their unique requirements
-// and constraints.  The policy provided here is implemented
-// using ::boost::mutex, and therefore requires exceptions on
-// certain platforms.
-#ifndef BOOST_NO_EXCEPTIONS
+// and constraints.
 template <class T> class multi_threaded
 {
 public:
@@ -51,7 +40,6 @@ private:
 };
 
 template <class T> ::boost::mutex multi_threaded<T>::lockable;
-#endif
 
 } // boost namespace
 

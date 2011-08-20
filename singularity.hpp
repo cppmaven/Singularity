@@ -33,13 +33,9 @@
 #ifndef SINGULARITY_HPP
 #define SINGULARITY_HPP
 
-// Certain developers cannot use exceptions, therefore this class
-// can be defined to use assertions instead.
-#ifndef BOOST_NO_EXCEPTIONS
 #include <exception>
-#else
-#include <boost/assert.hpp>
-#endif
+#include <boost/scoped_ptr.hpp>
+#include <boost/mpl/assert.hpp>
 #include <boost/preprocessor/control/if.hpp>
 #include <boost/preprocessor/punctuation/comma_if.hpp>
 #include <boost/preprocessor/repetition/repeat.hpp>
@@ -48,8 +44,6 @@
 #include <boost/preprocessor/arithmetic/inc.hpp>
 #include <boost/preprocessor/arithmetic/div.hpp>
 #include <boost/preprocessor/arithmetic/mod.hpp>
-#include <boost/mpl/assert.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <detail/pow2.hpp>
 
 #include <singularity_policies.hpp>
@@ -66,7 +60,6 @@
 
 namespace boost {
 
-#ifndef BOOST_NO_EXCEPTIONS
 struct singularity_already_created : virtual std::exception
 {
     virtual char const *what() const throw()
@@ -98,7 +91,6 @@ struct singularity_no_global_access : virtual std::exception
         return "boost::singularity_no_global_access";
     }
 };
-#endif
 
 namespace detail {
 
@@ -106,12 +98,13 @@ namespace detail {
 // model, only one singularity of type T can be created.
 template <class T> struct singularity_instance
 {
+    typedef ::boost::scoped_ptr<T> ptrtype;
     static bool get_enabled;
-    static ::boost::scoped_ptr<T> ptr;
+    static ptrtype ptr;
 };
 
 template <class T> bool singularity_instance<T>::get_enabled = false;
-template <class T> ::boost::scoped_ptr<T> singularity_instance<T>::ptr(0);
+template <class T> typename singularity_instance<T>::ptrtype singularity_instance<T>::ptr(0);
 
 } // detail namespace
 
@@ -219,14 +212,10 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
         M<T> guard;
         (void)guard;
 
-        #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::ptr.get() == 0)
         {
             throw singularity_already_destroyed();
         }
-        #else
-        BOOST_ASSERT((detail::singularity_instance<T>::ptr.get() != 0));
-        #endif
 
         detail::singularity_instance<T>::ptr.reset();
     }
@@ -236,36 +225,24 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
         M<T> guard;
         (void)guard;
 
-        #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::get_enabled == false) {
             throw singularity_no_global_access();
         }
-        #else
-        BOOST_ASSERT(detail::singularity_instance<T>::get_enabled != false);
-        #endif
 
-        #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::ptr.get() == 0)
         {
             throw singularity_not_created();
         }
-        #else
-        BOOST_ASSERT(detail::singularity_instance<T>::ptr.get() != 0);
-        #endif
 
         return *detail::singularity_instance<T>::ptr;
     }
 private:
     static inline void verify_not_created()
     {
-        #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::ptr.get() != 0)
         {
             throw singularity_already_created();
         }
-        #else
-        BOOST_ASSERT(detail::singularity_instance<T>::ptr.get() == 0);
-        #endif
     }
 };
 

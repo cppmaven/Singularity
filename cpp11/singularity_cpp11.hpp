@@ -33,19 +33,12 @@
 #ifndef SINGULARITY_CPP11_HPP_
 #define SINGULARITY_CPP11_HPP_
 
-// Certain developers cannot use exceptions, therefore this class
-// can be defined to use assertions instead.
-#ifndef BOOST_NO_EXCEPTIONS
 #include <exception>
-#else
-#include <boost/assert.hpp>
-#endif
 
 #include <singularity_cpp11_policies.hpp>
 
 namespace boost {
 
-#ifndef BOOST_NO_EXCEPTIONS
 struct singularity_already_created : virtual std::exception
 {
     virtual char const *what() const throw()
@@ -77,7 +70,6 @@ struct singularity_no_global_access : virtual std::exception
         return "boost::singularity_no_global_access";
     }
 };
-#endif
 
 namespace detail {
 
@@ -129,14 +121,10 @@ public:
         M<T> guard;
         (void)guard;
 
-        #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::ptr.get() == 0)
         {
             throw singularity_already_destroyed();
         }
-        #else
-        BOOST_ASSERT((detail::singularity_instance<T>::ptr.get() != 0));
-        #endif
 
         delete detail::singularity_instance<T>::ptr.get();
         detail::singularity_instance<T>::ptr.reset();
@@ -147,36 +135,24 @@ public:
         M<T> guard;
         (void)guard;
 
-        #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::get_enabled == false) {
             throw singularity_no_global_access();
         }
-        #else
-        BOOST_ASSERT(detail::singularity_instance<T>::get_enabled != false);
-        #endif
 
-        #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::ptr.get() == 0)
         {
             throw singularity_not_created();
         }
-        #else
-        BOOST_ASSERT(detail::singularity_instance<T>::ptr.get() != 0);
-        #endif
 
         return *detail::singularity_instance<T>::ptr;
     }
 private:
     static inline void verify_not_created()
     {
-        #ifndef BOOST_NO_EXCEPTIONS
         if (detail::singularity_instance<T>::ptr.get() != 0)
         {
             throw singularity_already_created();
         }
-        #else
-        BOOST_ASSERT(detail::singularity_instance<T>::ptr.get() == 0);
-        #endif
     }
 };
 

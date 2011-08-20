@@ -41,7 +41,6 @@
 <dt><span class="section"><a href="#singularity.limitations">Limitations</a></span></dt>
 <dt><span class="section"><a href="#singularity.customization">Customization</a></span></dt>
 <dd><dl>
-<dt><span class="section"><a href="#singularity.disableexceptions">Disabling Exceptions</a></span></dt>
 <dt><span class="section"><a href="#singularity.threadingpolicy">Threading Policy</a></span></dt>
 </dl></dd>
 <dt><span class="section"><a href="#singularity.references">References</a></span></dt>
@@ -305,17 +304,6 @@ These arbitrary values can be redefined by the user before including the header,
 <a name="singularity.customization"></a><a class="link" href="#singularity.customization" title="Customization">Customization</a>
 </h2></div></div></div>
 </div>
-
-
-<div class="section">
-<div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="singularity.disableexceptions"></a><a class="link" href="#singularity.disableexceptions" title="Disabling Exceptions">Disabling Exceptions</a>
-</h2></div></div></div>
-<p>
-Exceptions may be disabled by defining BOOST_NO_EXCEPTIONS prior to compilation.  All throws will be replaced with BOOST_ASSERT().  This may be useful when tightly constrained for space, such as embedded projects on small microcontrollers.
-</p>
-</div>
-
 
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">

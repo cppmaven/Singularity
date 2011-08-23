@@ -123,7 +123,7 @@ public:
 
         if (detail::singularity_instance<T>::ptr.get() == 0)
         {
-            throw singularity_already_destroyed();
+            BOOST_THROW_EXCEPTION(singularity_already_destroyed());
         }
 
         delete detail::singularity_instance<T>::ptr.get();
@@ -136,12 +136,12 @@ public:
         (void)guard;
 
         if (detail::singularity_instance<T>::get_enabled == false) {
-            throw singularity_no_global_access();
+            BOOST_THROW_EXCEPTION(singularity_no_global_access());
         }
 
         if (detail::singularity_instance<T>::ptr.get() == 0)
         {
-            throw singularity_not_created();
+            BOOST_THROW_EXCEPTION(singularity_not_created());
         }
 
         return *detail::singularity_instance<T>::ptr;
@@ -151,7 +151,7 @@ private:
     {
         if (detail::singularity_instance<T>::ptr.get() != 0)
         {
-            throw singularity_already_created();
+            BOOST_THROW_EXCEPTION(singularity_already_created());
         }
     }
 };

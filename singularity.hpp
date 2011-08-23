@@ -214,7 +214,7 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
 
         if (detail::singularity_instance<T>::ptr.get() == 0)
         {
-            throw singularity_already_destroyed();
+            BOOST_THROW_EXCEPTION(singularity_already_destroyed());
         }
 
         detail::singularity_instance<T>::ptr.reset();
@@ -226,12 +226,12 @@ BOOST_PP_REPEAT(BOOST_PP_INC(BOOST_SINGULARITY_PERFECT_FORWARD_ARG_SIZE), \
         (void)guard;
 
         if (detail::singularity_instance<T>::get_enabled == false) {
-            throw singularity_no_global_access();
+            BOOST_THROW_EXCEPTION(singularity_no_global_access());
         }
 
         if (detail::singularity_instance<T>::ptr.get() == 0)
         {
-            throw singularity_not_created();
+            BOOST_THROW_EXCEPTION(singularity_not_created());
         }
 
         return *detail::singularity_instance<T>::ptr;
@@ -241,7 +241,7 @@ private:
     {
         if (detail::singularity_instance<T>::ptr.get() != 0)
         {
-            throw singularity_already_created();
+            BOOST_THROW_EXCEPTION(singularity_already_created());
         }
     }
 };

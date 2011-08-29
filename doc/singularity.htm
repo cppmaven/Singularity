@@ -53,7 +53,7 @@
 </h2></div></div></div>
 
 <p>
-The Singularity Design Pattern allows you to restrict any class to a single instance.  Singularity gives you direct control over the lifetime of the object, is not a global object, does not limit you to a single constructor for the object, and is easily unit tested.
+The Singularity Design Pattern allows you to restrict any class to a single instance.  Singularity is not a global object, gives you direct control over the lifetime of the object, is easily unit tested, and does not limit you to a single constructor for the object.
 </p>
 </div>
 
@@ -68,19 +68,19 @@ The ability to restrict a class to a single instance is an important technique. 
 </p>
 
 <ol>
-<li>Lifetime: Singleton introduces numerous lifetime management complexities.  The undefined destruction order of multiple singletons is just one example.</li>
 <li>Scope: Singletons are global.  It is good practice to prefer non-globals wherever possible.  Object accessibility should be orthogonal to restrictions on the number of instances.</li>
+<li>Lifetime: Singleton introduces numerous lifetime management complexities.  The undefined destruction order of multiple singletons is just one example.</li>
 <li>Unit Testing: Singletons exist for the duration of program execution, which creates an order dependence between independent unit tests.  Also as a global, they are a difficult to replace dependency.</li>
 <li>Initialization: Singletons typically restricts the class to the default constructor.  This makes Singleton difficult for classes which require non-default constructors.</li>
 </ol>
 
 <p>
-Like Singleton, Singularity restricts a class to a single instance.  However Singularity does not suffer from lifetime, scoping, initialization and unit testing problems.  The following are the advantages of Singularity over Singleton:
+Like Singleton, Singularity restricts a class to a single instance.  However Singularity does not suffer from scoping, lifetime, unit testing and initialization problems.  The following are the advantages of Singularity over Singleton:
 </p>
 
 <ol>
-<li>Lifetime: The lifetime of the single object is bounded by calls to create() and destroy().  This lifetime is managed similiarly to objects bounded by calls to new() and delete().</li>
 <li>Scope: Singularity is not a global by default.  If global access is required, then a globally accessible get_global() function can be enabled upon creation of the instance.</li>
+<li>Lifetime: The lifetime of the single object is bounded by calls to create() and destroy().  This lifetime is managed similiarly to objects bounded by calls to new() and delete().</li>
 <li>Unit Testing: Singularities can be created before each unit test and explicity destroyed afterwords.  Therefore each unit test runs completely independent from the state of the other tests.</li>
 <li>Initialization: Singularities of objects can be created using any available constructor for that object.</li>
 </ol>

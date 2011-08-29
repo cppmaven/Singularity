@@ -30,7 +30,7 @@
 <p><b>Table of Contents</b></p>
 <dl>
 <dt><span class="section"><a href="#singularity.introduction">Introduction</a></span></dt>
-<dt><span class="section"><a href="#singularity.motivation">Motivation</a></span></dt>
+<dt><span class="section"><a href="#singularity.justification">Justification</a></span></dt>
 <dt><span class="section"><a href="#singularity.tutorial">Tutorial</a></span></dt>
 <dd><dl>
 <dt><span class="section"><a href="#singularity.factory">Usage as a Factory</a></span></dt>
@@ -53,35 +53,42 @@
 </h2></div></div></div>
 
 <p>
-The Singularity Design Pattern allows you to restrict any class to a single instance.  Singularity gives you direct control over the lifetime of the object, and does not require you to grant global access to the object, nor limit you to a single constructor for that object.
+The Singularity Design Pattern allows you to restrict any class to a single instance.  Singularity gives you direct control over the lifetime of the object, is not a global object, does not limit you to a single constructor for the object, and is easily unit tested.
 </p>
 </div>
 
 
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="singularity.motivation"></a><a class="link" href="#singularity.motivation" title="Motivation">Motivation</a>
+<a name="singularity.justification"></a><a class="link" href="#singularity.justification" title="Justification">Justification</a>
 </h2></div></div></div>
 
 <p>
-The ability to restrict a class to a single instance is an important technique.  While the commonly used Singleton Design Pattern achieves the desired goal, it introduces three undesirable limitations, namely:
+The ability to restrict a class to a single instance is an important technique.  While the commonly used Singleton Design Pattern achieves the desired goal, it introduces four undesirable limitations, namely:
 </p>
 
 <ol>
-<li>Lifetime: Singleton introduces lifetime management complexities.  The undefined destruction order of multiple singletons is just one example.</li>
-<li>Scope: Singletons are always globally accessible.  Accessibility should be orthogonal to restrictions on the number of instances.</li>
+<li>Lifetime: Singleton introduces numerous lifetime management complexities.  The undefined destruction order of multiple singletons is just one example.</li>
+<li>Scope: Singletons are global.  It is good practice to prefer non-globals wherever possible.  Object accessibility should be orthogonal to restrictions on the number of instances.</li>
+<li>Unit Testing: Singletons exist for the duration of program execution, which creates an order dependence between independent unit tests.  Also as a global, they are a difficult to replace dependency.</li>
 <li>Initialization: Singletons typically restricts the class to the default constructor.  This makes Singleton difficult for classes which require non-default constructors.</li>
 </ol>
 
 <p>
-Like Singleton, Singularity restricts a class to a single instance.  However Singularity does not suffer from lifetime, scoping and initialization problems.  The following are the advantages of Singularity over Singleton:
+Like Singleton, Singularity restricts a class to a single instance.  However Singularity does not suffer from lifetime, scoping, initialization and unit testing problems.  The following are the advantages of Singularity over Singleton:
 </p>
 
 <ol>
-<li>The lifetime of the single object is bounded by calls to create() and destroy().  This lifetime is managed similiarly to objects bounded by calls to new() and delete().</li>
-<li>Singularity does not force global access to the instance.  If global access is required, then a globally accessible get_global() function can be enabled upon creation of the instance.</li>
-<li>Singularities of objects can be created using any available constructor for that object.</li>
+<li>Lifetime: The lifetime of the single object is bounded by calls to create() and destroy().  This lifetime is managed similiarly to objects bounded by calls to new() and delete().</li>
+<li>Scope: Singularity is not a global by default.  If global access is required, then a globally accessible get_global() function can be enabled upon creation of the instance.</li>
+<li>Unit Testing: Singularities can be created before each unit test and explicity destroyed afterwords.  Therefore each unit test runs completely independent from the state of the other tests.</li>
+<li>Initialization: Singularities of objects can be created using any available constructor for that object.</li>
 </ol>
+
+<p>
+
+An excellent article on <a class="link" href="http://blogs.msdn.com/b/scottdensmore/archive/2004/05/25/140827.aspx">Why Singletons are Evil</a> is given by Scott Densmore.  Singularity neatly solves each described weakness.
+</p>
 
 </div>
 
@@ -267,7 +274,7 @@ To use a thread safe singularity as a base class, inherit from singularity as sh
 <span class="keyword">class</span> Horizon : <span class="keyword">public</span> singularity&lt;Horizon, multi_threaded&gt;
 </pre>
 <p>
-Because the Double-Checked Locking Pattern is not both thread-safe and portable (see Reference 2), the multi_threaded policy mutex is always acquired when calling on any member function of singularity.  When using the singularity with create_global(), due to the performance impact of acquiring a mutex, it is recommended that get_global() be called infrequently, and the returned reference stored for later use.
+Because the Double-Checked Locking Pattern is not both thread-safe and portable (see Reference 3), the multi_threaded policy mutex is always acquired when calling on any member function of singularity.  When using the singularity with create_global(), due to the performance impact of acquiring a mutex, it is recommended that get_global() be called infrequently, and the returned reference stored for later use.
 </p>
 </div>
 
@@ -341,6 +348,8 @@ Instantiation of this object creates an RAII style lock protecting access to the
 </h2></div></div></div>
 
 <ol> 
+<li><a class="link" href="http://blogs.msdn.com/b/scottdensmore/archive/2004/05/25/140827.aspx">Why Singletons are Evil</a>,
+		Scott Densmore, 2004
 <li><a href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2002/n1385.htm" target="_blank">The Forwarding Problem</a>,
         Peter Dimov, Howard E. Hinnant, Dave Abrahams, 2002</li> 
 <li><a href="http://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf" target="_blank">C++ and the Perils of Double-Checked Locking</a>,

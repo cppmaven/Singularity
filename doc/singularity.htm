@@ -1,7 +1,7 @@
 
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
 
-<title>Boost.Singularity (Proposed)</title>
+<title>Boost.singularity (Proposed)</title>
 <link rel="stylesheet" href="./boostbook.css" type="text/css">
 </head>
 
@@ -10,7 +10,7 @@
 <div class="titlepage"><div>
 
 <div><h2 class="title">
-<a name="singularity"></a>Boost.Singularity (Proposed)
+<a name="singularity"></a>Boost.singularity (Proposed)
 </h2></div>
 
 <div><div class="author"><h5 class="author">
@@ -29,10 +29,10 @@
 <div class="toc">
 <p><b>Table of Contents</b></p>
 <dl>
-<dt><span class="section"><a href="#singularity.introduction">Introduction</a></span></dt>
-<dt><span class="section"><a href="#singularity.justification">Justification</a></span></dt>
+<dt><span class="section"><a href="#singularity.motivation">Motivation</a></span></dt>
+<dt><span class="section"><a href="#singularity.advantages">Advantages</a></span></dt>
 <dd><dl>
-<dt><span class="section"><a href="#singularity.scoping">Scoping</a></span></dt>
+<dt><span class="section"><a href="#singularity.scope">Scope</a></span></dt>
 <dt><span class="section"><a href="#singularity.lifetime">Lifetime</a></span></dt>
 <dt><span class="section"><a href="#singularity.unittesting">Unit Testing</a></span></dt>
 <dt><span class="section"><a href="#singularity.initialization">Initialization</a></span></dt>
@@ -55,33 +55,32 @@
 
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="singularity.introduction"></a><a class="link" href="#singularity.introduction" title="Introduction">Introduction</a>
+<a name="singularity.motivation"></a><a class="link" href="#singularity.motivation" title="Motivation">Motivation</a>
 </h2></div></div></div>
+<p>
+The singularity design pattern allows you to restrict any class to a single instance, which is an important technique.  While the popular singleton design pattern accomplishes this as well, singleton introduces a number of undesirable constraints and complexities, in the areas of scope, lifetime, unit testing and initialization.  Singularity is an improved alternative to singleton, which restricts any class to a single instance, without the difficulties of singleton.
+</p>
 
 <p>
-The Singularity design pattern allows you to restrict any class to a single instance.  While the popular Singleton design pattern accomplishes this as well, Singularity differs from Singleton in that it is not a global object, it gives you direct control over the lifetime of the object, is easily unit tested, and does not limit you to a single constructor for the object.
+Some of the challenges of using the well known singleton design pattern are described in the article titled "<a class="link" href="http://blogs.msdn.com/b/scottdensmore/archive/2004/05/25/140827.aspx">Why Singletons are Evil</a>", by Scott Densmore.  While Singleton does have perfectly legitimate uses, singularity does neatly solve each of the described weakness.
 </p>
-</div>
 
+</div>
 
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="singularity.justification"></a><a class="link" href="#singularity.justification" title="Justification">Justification</a>
+<a name="singularity.advantages"></a><a class="link" href="#singularity.advantages" title="Advantages">Advantages</a>
 </h2></div></div></div>
 
-<p>
-The ability to restrict a class to a single instance is an important technique.  While the commonly used Singleton achieves the desired goal, it introduces four undesirable limitations, in the areas of scope, lifetime, unit testing and initialization.  An excellent article titled "<a class="link" href="http://blogs.msdn.com/b/scottdensmore/archive/2004/05/25/140827.aspx">Why Singletons are Evil</a>" is given by Scott Densmore.  While Singleton does has some perfectly legitimate uses, Singularity does neatly solve each described weakness.
-</p>
-
 <div class="titlepage"><div><div><h5 class="title" style="clear: both">
-<a name="singularity.scoping"></a><a class="link" href="#singularity.scoping" title="Scoping">Scoping</a>
+<a name="singularity.scope"></a><a class="link" href="#singularity.scope" title="Scope">Scope</a>
 </h5></div></div></div>
 
 <p>
-Singletons are globally accessible.  While it is certainly convenient to not have to pass the Singleton instance to objects which depend on it, it is well accepted that reducing the scope of objects as much as possible is a good practice.  Making an object a Singleton achieves the desired single instance, but additionally make it impossible to prevent access to the object from anywhere in the code.  Object accessibility should be orthogonal to restrictions on the number of instances.<br>
+A singularity can be created as either a local object, or a globally accessible object.  If you need a locally accessible object, then call create().  If you need a globally accessible object, then instead call create_global().  In this way, the decision on the scope and accessibility of the object is decided independent of the decision to make the object singular.  For singularity, object accessibility is orthogonal to restrictions on the number of instances, as it should be.
 </p>
 <p>
-Singularity is not a global, unless you want it to be.  If you need a non-global, call create(), otherwise call create_global().  The latter will enable a globally accessible get_global() function can be enabled upon creation of the instance.  In this way, the decision on the scope of the object is decided independent of the decision to make the object singular.
+Singletons are always globally accessible.  This effectively makes them a global, and makes it impossible to prevent access to that object from anywhere in the code.  This prevents encapsulation and tightly couples a singleton to all classes and functions which access it.
 </p>
 
 <div class="titlepage"><div><div><h5 class="title" style="clear: both">
@@ -89,10 +88,10 @@ Singularity is not a global, unless you want it to be.  If you need a non-global
 </h5></div></div></div>
 
 <p>
-Singleton introduces numerous lifetime management complexities.  This is partly due to the feature of lazy initialization, as well as the undefined destruction order of multiple singletons.  An excellent discussion of these complexities is given in <a href="http://en.wikipedia.org/wiki/Modern_C%2B%2B_Design" target="_blank">Modern C++ Design</a>, chapter 6, by Andrei Alexandrescu.<br>
+The lifetime of the singularity object is bounded by calls to create() and destroy().  The lifetime of many objects are bounded by calls to new() and delete(), and managing the lifetime of these objects is well understood.  The lifetime of singularity is managed explicitly, and is under the direct control of the developer.  This makes lifetime management straightforward, and reduces the number of hidden subleties that a developer needs to be aware of when using the pattern.
 </p>
 <p>
-The lifetime of the Singularity object is bounded by calls to create()/create_global() and destroy().  This lifetime is managed explicitly, and is under the direct control of the developer.  This greatly reduces the number of hidden subleties that a developer needs to be aware of when using the pattern.
+Singleton introduces numerous subtle lifetime management complexities.  This is partly due to the feature of lazy initialization, as well as the undefined destruction order of multiple singletons.  An excellent discussion of these complexities, is given in <a href="http://en.wikipedia.org/wiki/Modern_C%2B%2B_Design" target="_blank">Modern C++ Design</a>, chapter 6, by Andrei Alexandrescu.  Developers can use singularity reliably, without requiring intimate knowledge of various compiler techniques to make initialization of static variables thread safe, for example.
 </p>
 
 <div class="titlepage"><div><div><h5 class="title" style="clear: both">
@@ -100,10 +99,10 @@ The lifetime of the Singularity object is bounded by calls to create()/create_gl
 </h5></div></div></div>
 
 <p>
-Singletons are created on first access, and exist for the duration of program execution.  This creates an undesirable coupling between independent unit tests, and an order dependence.  Another difficulty of testing with Singletons is that they are globals.  Testable object should be context independent, but if an object is accessing a Singleton, it is difficult to replace this dependency with an object of another type.<br>
+Singularities can be created before each unit test and explicity destroyed afterwords.  Therefore each unit test runs completely independent from the state of the other tests.  They can be passed into testable objects as dependencies, making the testable object context independent.  This context can be replaced with a mock object, and passed in as the dependency, since the object under test is not coupled directly to an object of a specific type.
 </p>
 <p>
-Singularities can be created before each unit test and explicity destroyed afterwords.  Therefore each unit test runs completely independent from the state of the other tests.  They can be passed into testable objects as dependencies, making the testable object context independent, and mocks of the Singularity can be created and passed in instead when required.
+Singletons are created on first access, and exist for the duration of program execution.  Therefore state information is maintained across separate unit tests, which creates an undesirable coupling between independent unit tests, as well as an order dependence.  Another difficulty of testing with singletons is that the unit tested objects access the singleton directly, since they are globally accessible objects.  Testable objects should be context independent, but if an object is tightly coupled to a singleton, it is difficult to replace this dependency with an object of another type.<br>
 </p>
 
 <div class="titlepage"><div><div><h5 class="title" style="clear: both">
@@ -111,10 +110,10 @@ Singularities can be created before each unit test and explicity destroyed after
 </h5></div></div></div>
 
 <p>
-Singletons typically restricts a class to its default constructor.  A pattern which enforces a single instance, should not place restrictions on the number, or type of constructors which can be used.<br>
+Singularities of objects can be created using any available constructor for that object.  Singularity can be used as either a factory, or a base class.  In either case, all the available constructors for the class can be used to create the single instance.
 </p>
 <p>
-Singularities of objects can be created using any available constructor for that object.  Singularity can be used as either a factory, or a base class.  In either case, all the available constructors for the class can be used to create the single instance.
+Singletons typically restricts a class to its default constructor.  Any pattern whose purpose is to enforce a single instance, should not necessarily place restrictions on the number, or type of constructors which can be used to instantiate that instance.<br>
 </p>
 
 </div>
@@ -125,7 +124,7 @@ Singularities of objects can be created using any available constructor for that
 </h2></div></div></div>
 
 <p>
-To use Singularity, either as a factory or a base class, the class which is to be singular must make all constructors private, and friend the singularity class.  A macro is provided to simplify the friend statement when used as a factory:
+To use singularity, either as a factory or a base class, the class which is to be singular must make all constructors private, and friend the singularity class.  A macro is provided to simplify the friend statement when used as a factory:
 </p>
 <pre class="programlisting">
 <span class="preprocessor">#define</span> FRIEND_CLASS_SINGULARITY \
